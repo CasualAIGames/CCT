@@ -1,0 +1,1219 @@
+/* --- Estilos Generales --- */
+body {
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #1a1a1a;
+  color: white;
+  touch-action: manipulation;
+}
+
+input,
+select,
+button {
+  font-size: 16px;
+  -webkit-touch-callout: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+}
+
+.hidden {
+  display: none;
+}
+
+/* --- Fuentes Personalizadas --- */
+@font-face {
+  font-family: 'Pricedown';
+  src: url('fonts/Pricedown.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* --- Titulados y Textos Especiales --- */
+.auth-title {
+  font-family: 'Pricedown', sans-serif;
+  font-size: 36px;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px #000;
+  letter-spacing: 2px;
+}
+
+.game-title {
+  font-family: 'Pricedown', sans-serif;
+  color: #ffffff;
+}
+
+.game-title.main-title {
+  font-size: 48px;
+  color: #FFD700;
+  text-align: center;
+  line-height: 1.1;
+  margin-bottom: 20px;
+}
+
+/* --- Estructura Principal --- */
+#app-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+#map-container {
+  flex: 3;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.leaflet-container {
+  height: 100%;
+}
+
+/* --- Barra Lateral --- */
+#sidebar {
+  flex: 1;
+  background-color: #222;
+  padding: 20px;
+  overflow-y: auto;
+  max-height: 100vh;
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 300px;
+  transform: translateX(100%);
+  transition: transform 0.4s ease;
+  z-index: 1000;
+  border-left: 1px solid #555;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-bottom: 10px;
+}
+
+#sidebar.active {
+  transform: translateX(0);
+}
+
+.sidebar-header {
+  margin-bottom: 20px;
+}
+
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* --- Tarjetas y Secciones --- */
+.player-card,
+.section {
+  background-color: #333;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 15px;
+}
+
+.section h3.game-title {
+  cursor: pointer;
+  margin: 0;
+  padding: 10px 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 20px;
+  border-bottom: 1px solid #555;
+}
+
+.section.collapsed>div {
+  display: none;
+}
+
+.section.collapsed h3.game-title i.fas {
+  transform: rotate(180deg);
+}
+
+/* --- Pestañas --- */
+.tab-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  justify-content: center;
+}
+
+.tab-button {
+  background-color: #333;
+  border: none;
+  padding: 5px 10px;
+  color: #fff;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  margin-right: 3px;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex-grow: 1;
+  text-align: center;
+}
+
+.tab-button.active {
+  background-color: #444;
+}
+
+.tab-icon,
+.world-icon {
+  width: 32px;
+  height: 32px;
+  margin-right: 2px;
+}
+
+.tab-content {
+  display: none;
+  padding: 10px;
+  background-color: #222;
+  border-radius: 0 0 8px 8px;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* --- Banner de Estadísticas --- */
+#statsBanner {
+  background: #222;
+  backdrop-filter: blur(10px);
+  padding: 8px 10px;
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  z-index: 2000;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  width: 90%;
+  max-width: 900px;
+  border-radius: 8px;
+  border: 1px solid #555;
+  font-family: 'Pricedown', sans-serif;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+#statsBanner.active {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* --- Animaciones de Estadísticas --- */
+.banner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.banner-stats {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #555;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin: 3px 8px;
+  text-align: center;
+  position: relative;
+}
+
+/* Contenedores para texto de incremento por segundo */
+.money-per-second-container,
+.esbirros-per-second-container,
+.arrested-per-second-container {
+  position: absolute;
+  bottom: -0.8rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7em;
+  font-family: 'Pricedown', sans-serif;
+}
+
+.money-per-second-container,
+.esbirros-per-second-container {
+  color: #00ff00;
+}
+
+.arrested-per-second-container {
+  color: #ff0000;
+}
+
+/* Animaciones de actualizaciones */
+.money-animation,
+.esbirros-animation,
+.arrested-animation {
+  position: absolute;
+  font-size: 1.2em;
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  pointer-events: none;
+  font-family: 'Pricedown', sans-serif;
+}
+
+.arrested-animation {
+  color: #ff0000;
+}
+
+/* --- Sistema de Estrellas --- */
+.stars {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.stars .progress-bar {
+  background-color: #ccc;
+  height: 8px;
+  width: 100%;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.stars .progress {
+  background-color: #00ff00;
+  height: 100%;
+  width: 0;
+  transition: width 0.3s ease;
+  z-index: 2;
+  border-radius: 4px;
+}
+
+.stars .star {
+  width: 12px;
+  height: 12px;
+  background-color: #f1c40f;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  margin-left: 2px;
+  opacity: 0;
+  z-index: 3;
+  transition: opacity 0.3s ease;
+}
+
+/* --- Botones Generales --- */
+.btn {
+  background-color: #3498db;
+  border: none;
+  padding: 10px 15px;
+  margin: 5px;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.btn:hover {
+  background-color: #2980b9;
+  transform: scale(1.05);
+}
+
+.btn.clicked {
+  transform: scale(0.95);
+}
+
+/* --- Botones Multiplicadores --- */
+.btn-multiplier {
+  background-color: #27ae60;
+}
+
+.btn-multiplier:hover {
+  background-color: #1e8449;
+}
+
+/* --- Botón para Menú Lateral --- */
+#menu-toggle-button {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  background-color: #444;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 1500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#menu-toggle-button:hover {
+  background-color: #555;
+}
+
+/* --- Notificaciones --- */
+#notificationContainer {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  width: 300px;
+  z-index: 3000;
+}
+
+.notification {
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 10px 15px;
+  margin-top: 5px;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: slideIn 0.3s ease forwards;
+  font-size: 0.9em;
+}
+
+.notification.slideOut {
+  animation: slideOut 0.3s ease forwards;
+}
+
+.close-btn {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  cursor: pointer;
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.8em;
+}
+
+@keyframes slideIn {
+  from {
+      opacity: 0;
+      transform: translateY(10px);
+  }
+  to {
+      opacity: 1;
+      transform: translateY(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+      opacity: 1;
+      transform: translateY(0);
+  }
+  to {
+      opacity: 0;
+      transform: translateY(10px);
+  }
+}
+
+/* Flash Animations para Banner */
+#bannerMoney.money-flash {
+  animation: moneyFlash 0.5s ease;
+  color: #00ff00;
+}
+
+@keyframes moneyFlash {
+  0% {
+      color: #00ff00;
+  }
+
+  50% {
+      color: #fff;
+  }
+
+  100% {
+      color: #00ff00;
+  }
+}
+
+#bannerEsbirros.esbirro-flash {
+  animation: esbirroFlash 0.5s ease;
+  color: #00ff00;
+}
+
+@keyframes esbirroFlash {
+  0% {
+      color: #00ff00;
+  }
+
+  50% {
+      color: #fff;
+  }
+
+  100% {
+      color: #00ff00;
+  }
+}
+
+/* --- Upgrades --- */
+.upgrade-item {
+  margin-bottom: 0;
+  border-radius: 8px;
+  background-color: #333;
+  transition: background-color 0.3s ease;
+  font-size: 0.85em;
+  position: relative;
+  padding: 10px;
+}
+
+.upgrade-item.clickable:hover {
+  background-color: #444;
+}
+
+.upgrade-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.upgrade-image {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 0;
+  border: none;
+  background-color: transparent;
+}
+
+.upgrade-title .name {
+  font-weight: bold;
+  color: #fff;
+  font-size: 1em;
+  margin-bottom: 2px;
+}
+
+.upgrade-title .cost {
+  color: #ddd;
+  font-size: 0.9em;
+}
+
+.upgrade-details .desc {
+  color: #ccc;
+  line-height: 1.4;
+  margin-bottom: 5px;
+  font-size: 0.9em;
+}
+
+.upgrade-details .effect {
+  font-size: 0.9em;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.upgrade-details .effect .value {
+  font-weight: bold;
+  color: #00ff00;
+}
+
+.upgrade-details .effect .unit {
+  color: #aaa;
+}
+
+.upgrade-details .times {
+  font-size: 0.8em;
+  color: #888;
+  margin-top: 5px;
+}
+
+.upgrade-available {
+  border: 1px solid #2ecc71;
+}
+
+.upgrade-unavailable {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* --- Icono de Candado y Tooltip --- */
+.lock-icon {
+  margin-left: 5px;
+  color: #ccc;
+  cursor: help;
+  position: relative;
+  font-size: 0.7em;
+}
+
+.lock-icon .tooltiptext {
+  visibility: hidden;
+  width: 220px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -110px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.lock-icon:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* --- Modals --- */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 3000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal.active {
+  display: block;
+}
+
+.modal-content {
+  background-color: #222;
+  margin: 15% auto;
+  padding: 20px;
+  border-radius: 10px;
+  width: 80%;
+  max-width: 600px;
+  position: relative;
+  color: white;
+  font-family: 'Roboto', sans-serif;
+  border: 1px solid #888;
+}
+
+.modal-content .close-modal-btn {
+  color: #aaa;
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.modal-content .close-modal-btn:hover {
+  color: white;
+}
+
+/* --- Popup para Selección de Líder --- */
+.leader-select-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 6000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.leader-select-popup.hidden {
+  display: none;
+}
+
+.leader-select-content {
+  background-color: #222;
+  padding: 20px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+  max-height: 80vh;
+  overflow-y: auto;
+  margin: 0 auto;
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.close-leader-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  color: #FFD700;
+  transition: 0.2s;
+}
+
+.close-leader-btn:hover {
+  color: #fff;
+}
+
+.leader-select-title {
+  font-family: 'Pricedown', sans-serif;
+  color: #FFD700;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.leader-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+}
+
+.leader-card {
+  background-color: #333;
+  border-radius: 10px;
+  padding: 10px;
+  display: inline-block;
+  text-align: center;
+  width: 120px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.3s;
+}
+
+.leader-card:hover {
+  transform: scale(1.05);
+  background-color: #444;
+}
+
+.leader-card.selected {
+  border: 2px solid #FFD700;
+}
+
+.leader-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.leader-card-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #555;
+  margin-bottom: 5px;
+  transition: border-color 0.3s;
+}
+
+.leader-card.selected .leader-card-image {
+  border-color: #FFD700;
+}
+
+.leader-card-name {
+  font-weight: bold;
+  color: #fff;
+  font-size: 0.85em;
+}
+
+/* --- Autenticación --- */
+#auth-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 7000; /* Asegurar que esté por encima de todo */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.auth-form {
+  background-color: #222;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.auth-form input[type="email"],
+.auth-form input[type="password"],
+.auth-form input[type="text"],
+.auth-form select {
+  margin-bottom: 10px;
+  padding: 8px;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  width: calc(100% - 16px);
+  box-sizing: border-box;
+}
+#auth-container.hidden {
+  display: none; /* Ocultar auth-container cuando no se necesita */
+}
+.input-group {
+  margin-bottom: 10px;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+#btnStartGame {
+  margin-top: 10px;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+/* --- News Popup --- */
+.news-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  border: 2px solid #FFD700;
+  background-color: #111;
+  color: #fff;
+  z-index: 5000;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+  animation: fadeInNews 0.4s ease-out forwards;
+}
+
+.news-content {
+  padding: 15px;
+  position: relative;
+}
+
+.close-news-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  color: #FFD700;
+  transition: 0.2s;
+}
+
+.close-news-btn:hover {
+  color: #fff;
+}
+
+.news-title {
+  font-family: 'Pricedown', sans-serif;
+  color: #FFD700;
+  font-size: 1.1em;
+  margin-top: 0;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.news-description {
+  font-size: 0.85em;
+  line-height: 1.4;
+  text-align: justify;
+  margin-bottom: 0;
+}
+
+#newsOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 4500;
+  display: none;
+}
+
+@keyframes fadeInNews {
+  0% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.9);
+  }
+  100% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* --- Keyframe para Input y Botón (fadeInUp) --- */
+@keyframes fadeInUp {
+  from {
+      opacity: 0;
+      transform: translateY(10px);
+  }
+  to {
+      opacity: 1;
+      transform: translateY(0);
+  }
+}
+
+/* Estilos de Input de Autenticación */
+#leaderNameInput {
+  padding: 8px;
+  border-radius: 5px;
+  width: calc(100% - 16px);
+  box-sizing: border-box;
+  background-color: #333;
+  color: #fff;
+  font-size: 0.9em;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  border: none;
+}
+
+#leaderNameInput:focus {
+  outline: none;
+  background-color: #444;
+  color: #fff;
+  box-shadow: 0 0 5px #FFD700;
+}
+
+#btnStartGame {
+  background-color: #27ae60;
+  border: none;
+  padding: 10px 15px;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  font-size: 1em;
+}
+
+#btnStartGame:hover {
+  background-color: #1e8449;
+  transform: scale(1.05);
+}
+
+/* --- Tarjeta de Lider --- */
+.player-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.leader-card-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.leader-image {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #555;
+}
+
+.band-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.band-info-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9em;
+}
+
+.band-info-item img.country-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.money-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+/* --- Listado de Países --- */
+.country-list-container {
+  border: 1px solid #555;
+  border-radius: 5px;
+  padding: 5px;
+  margin-bottom: 10px;
+  overflow-y: auto;
+  max-height: 150px;
+}
+
+#country-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#country-list li {
+  padding: 5px 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 0.9em;
+}
+
+#country-list li:hover {
+  background-color: #444;
+}
+
+/* --- Detalles del País --- */
+#country-detail {
+  padding: 10px;
+  border: 1px solid #555;
+  border-radius: 5px;
+}
+
+#detailCountryName {
+  margin-top: 0;
+  font-size: 1.1em;
+  margin-bottom: 5px;
+}
+
+#detail-stats p {
+  margin: 5px 0;
+  font-size: 0.9em;
+}
+
+.esbirro-color {
+  color: #00ff00;
+}
+
+.arrested-color {
+  color: #ff0000;
+}
+
+/* --- Herramientas de Prueba --- */
+.test-tools {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid #555;
+}
+
+/* --- Abilities Grid --- */
+.abilities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.ability-column {
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Logout Container --- */
+.logout-container {
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* --- Media Queries --- */
+/* Móviles verticales */
+@media (max-width: 768px) and (orientation: portrait) {
+  #statsBanner {
+      width: 95%;
+      padding: 10px;
+      top: 5px;
+  }
+
+  #menu-toggle-button {
+      bottom: 0;
+      left: 50%;
+      transform: translate(-50%, -5px);
+      width: 40px;
+      height: 40px;
+      font-size: 1.2em;
+  }
+
+  #sidebar {
+      width: 100%;
+      padding-bottom: 50px;
+      transform: translateY(100%);
+      transition: transform 0.4s ease;
+      bottom: 0;
+      top: auto;
+      height: auto;
+      max-height: 50vh;
+      border-left: none;
+      border-top: 2px solid #555;
+      right: auto;
+      left: 0;
+      position: fixed;
+  }
+
+  #sidebar.active {
+      transform: translateY(0);
+  }
+
+  #sidebar::before {
+      content: '';
+      display: block;
+      width: 30px;
+      height: 4px;
+      background-color: #fff;
+      border-radius: 2px;
+      margin: 10px auto 5px auto;
+  }
+
+  #app-container {
+      flex-direction: column;
+  }
+
+  #map-container {
+      flex: 1;
+  }
+}
+
+/* Pantallas grandes y horizontales */
+@media (min-width: 769px),
+(orientation: landscape) {
+  #sidebar {
+      width: 350px;
+      height: 100vh;
+      overflow-y: auto;
+      transform: translateX(0);
+      right: 0;
+      top: 0;
+      z-index: 1000;
+      border-left: 1px solid #555;
+      transition: transform 0.4s ease;
+      position: fixed;
+  }
+  #statsBanner {
+      z-index: 2000;
+  }
+
+  #app-container {
+      margin-right: 350px;
+  }
+}
+
+/* Asegurar que la barra lateral cubra todo el alto */
+@media (min-width: 769px),
+(orientation: landscape) {
+  #sidebar {
+      height: 100vh;
+      overflow-y: auto;
+      position: fixed;
+  }
+
+  #app-container {
+      margin-right: 350px;
+  }
+}
+
+/* Pantallas muy grandes */
+@media (min-width: 769px) {
+  #sidebar {
+      width: 400px;
+  }
+
+  #app-container {
+    margin-right: 400px;
+  }
+}
+
+/* Móviles generales */
+@media (max-width: 768px) {
+  /* Styles for smaller screens */
+}
+
+/* Móviles en horizontal */
+@media (max-width: 768px) and (orientation: landscape) {
+  #sidebar {
+      width: 300px;
+      height: auto;
+      max-height: 50vh;
+      transform: translateY(100%);
+      transition: transform 0.4s ease;
+  }
+
+  #sidebar.active {
+      transform: translateY(0);
+  }
+
+  #menu-toggle-button {
+      bottom: 0;
+      left: 50%;
+      transform: translate(-50%, -5px);
+  }
+
+  #app-container {
+      flex-direction: column;
+  }
+
+  #map-container {
+      flex: 1;
+  }
+}
+/* Estilos para botones de link en formularios */
+.link-button {
+  background: none;
+  border: none;
+  color: #3498db;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 1em;
+  padding: 0;
+  margin: 0;
+}
+
+.link-button:hover {
+  color: #2980b9;
+}
+/* Estilos específicos para contenedor de login y registro */
+#login-form-container,
+#register-form-container {
+  max-width: 350px;
+  width: 90%;
+}
+
+/* Asegurar que el contenedor principal de auth-container cubra toda la pantalla y esté centrado */
+#auth-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 7000; /* Asegurar que esté por encima de todo */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
