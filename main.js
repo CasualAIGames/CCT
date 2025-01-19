@@ -1077,7 +1077,7 @@ setInterval(() => {
     }
     renderStats();
     renderAbilities();
-    renderWorldList();
+    renderWorldList(); 
     refreshGeoStyle();
     if (countriesData && Object.keys(countryStatus).length === countriesData.features.length) {
         let allDominated = Object.values(countryStatus).every(st => st.dominated);
