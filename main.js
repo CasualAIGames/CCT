@@ -802,7 +802,7 @@ function startGame() {
 }
 
 // --- Initial Data Load and Setup ---
-fetch("countriesWithPopulation.geo.json").then(r => r.json()).then(data => {
+fetch("./countriesWithPopulation.geo.json").then(r => r.json()).then(data => {
     countriesData = data;
     geojsonLayer = L.geoJSON(data, {
         style: () => ({ color: "#555", weight: 1, fillColor: "#f0f0f0", fillOpacity: 0.2 }),
