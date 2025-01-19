@@ -1,10 +1,8 @@
-// main.js
 import { moneyUpgrades, esbirrosUpgrades, policeUpgrades, weaponsUpgrades } from "./upgrades.js";
 import { generateNews } from "./ia.js";
 import { auth, initializeAuth, logout, register, login } from "./auth.js";
 import { database, ref, set, get } from "./firebase-config.js";
 
-// --- Map Initialization ---
 const map = L.map("map", { noWrap: true, minZoom: 2, maxZoom: 18 }).setView([40, -3], 5);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { noWrap: true }).addTo(map);
 let geojsonLayer = null;
@@ -42,16 +40,13 @@ const NOT_ENOUGH_MONEY_COOLDOWN = 10000;
 const leaders = [{ id: "leader1", image: "images/man.jfif" }, { id: "leader2", image: "images/woman.jfif" }];
 let currentUser = null;
 
-// --- Failed Images Cache ---
 const failedImages = new Set();
 
-// --- Image Error Handler ---
 function handleImageError(imgElement, imagePath) {
     imgElement.style.display = 'none';
     failedImages.add(imagePath);
 }
 
-// --- Utility Functions ---
 function logMessage(message) {
     const logEntry = new Date().toISOString() + ": " + message;
     log.push(logEntry);
@@ -135,7 +130,6 @@ function updatePerSecondStats() {
     esbirrosPerSecond = totalEsbirrosUpgrades * esbirrosPerTickMultiplier * (1 + esbirrosMultiplierPercentage);
 }
 
-// --- Rendering Functions ---
 function renderStats() {
     document.getElementById("moneyPerSecond").innerText = formatNumber(moneyPerSecond);
     document.getElementById("esbirrosPerSecond").innerText = formatNumber(esbirrosPerSecond);
@@ -195,7 +189,6 @@ function shouldShow(up, upgradesArray) {
     return false;
 }
 
-// --- Upgrade Rendering with Image Handling ---
 function renderUpgradesList(id, upgradesArray, buyFunc, type) {
     let container = document.getElementById(id);
     container.innerHTML = "";
@@ -234,7 +227,6 @@ function renderUpgradesList(id, upgradesArray, buyFunc, type) {
             }
         }
 
-        // **Manejo de imágenes con caché de fallos**
         let imageHTML = '';
         if (up.image && !failedImages.has(up.image)) {
             imageHTML = `<img src="${up.image}" alt="${up.name}" class="upgrade-image" onerror="handleImageError(this, '${up.image}')"/>`;
@@ -286,7 +278,6 @@ function renderAbilityColumn(id, abilitiesArray, buyFunc) {
             effectText = '<div class="effect">' + ability.desc + "</div>";
         }
 
-        // **Manejo de imágenes con caché de fallos**
         let imageHTML = '';
         if (ability.image && !failedImages.has(ability.image)) {
             imageHTML = `<img src="${ability.image}" alt="${ability.name}" class="upgrade-image" onerror="handleImageError(this, '${ability.image}')"/>`;
@@ -364,7 +355,6 @@ function showCountryDetail(iso) {
     renderStats();
 }
 
-// --- Rendering Upgrades ---
 function renderUpgrades() {
     renderUpgradesList("moneyUpgrades", moneyUpgrades, buyMoneyUpgrade, "money");
     renderUpgradesList("esbirrosUpgrades", esbirrosUpgrades, buyEsbirrosUpgrade, "esbirros");
@@ -372,7 +362,6 @@ function renderUpgrades() {
     renderAbilities();
 }
 
-// --- Upgrade Buying Functions ---
 function buyMoneyUpgrade(u) {
     let c = costOf(u);
     if (playerMoney < c) {
@@ -487,7 +476,6 @@ function maybeRaiseStars(level) {
     }
 }
 
-// --- Click Handling ---
 document.getElementById("btnMoneyClick").addEventListener("click", e => {
     handleMoneyClick(e, 1);
 });
@@ -510,7 +498,6 @@ function handleMoneyClick(e, multiplier) {
     saveGame();
 }
 
-// --- Map Event Handling ---
 function onCountryClick(e) {
     showCountryDetail(e.target.feature.id);
 }
@@ -552,7 +539,6 @@ function getPopulationFromFeature(iso) {
     return feat.properties.population || 0;
 }
 
-// --- Authentication and Registration ---
 const defaultGameState = {
     playerMoney: 100,
     totalArrested: 0,
@@ -660,7 +646,6 @@ document.getElementById('show-login').addEventListener('click', function () {
     document.getElementById('register-form-container').classList.add('hidden');
 });
 
-// --- Game Save and Load ---
 function saveGame() {
     if (!currentUser) {
         console.error("No hay usuario autenticado para guardar el juego.");
@@ -742,6 +727,8 @@ function loadGame(uid) {
                 if (gameState.weaponsUpgrades && gameState.weaponsUpgrades[index]) upgrade.times = gameState.weaponsUpgrades[index]?.times || 0;
                 else upgrade.times = 0;
             });
+            totalEsbirrosUpgrades = esbirrosUpgrades.reduce((acc, up) => acc + (up.effectEsb || 0) * up.times, 0);
+            updatePerSecondStats();
             logMessage("Juego cargado desde Firebase.");
             startGame();
         } else {
@@ -784,7 +771,6 @@ document.querySelectorAll('.leader-card').forEach(card => {
     });
 });
 
-// --- Game Start and Core Loop ---
 function startGame() {
     renderStats();
     renderUpgrades();
@@ -801,8 +787,7 @@ function startGame() {
     gameActive = true;
 }
 
-// --- Initial Data Load and Setup ---
-fetch("countriesWithPopulation.geo.json").then(r => r.json()).then(data => {
+fetch("./countriesWithPopulation.geo.json").then(r => r.json()).then(data => {
     countriesData = data;
     geojsonLayer = L.geoJSON(data, {
         style: () => ({ color: "#555", weight: 1, fillColor: "#f0f0f0", fillOpacity: 0.2 }),
@@ -894,7 +879,6 @@ renderStats();
 renderAbilities();
 renderWorldList();
 
-// --- Tab Navigation ---
 document.querySelectorAll(".tab-button").forEach(btn => {
     btn.addEventListener("click", e => {
         const tabId = e.target.getAttribute("data-tab") || e.target.parentElement.getAttribute("data-tab");
@@ -906,7 +890,6 @@ document.querySelectorAll(".tab-button").forEach(btn => {
     });
 });
 
-// --- Section Collapsing ---
 document.querySelectorAll(".section h3.game-title").forEach(title => {
     title.addEventListener("click", () => {
         title.parentElement.classList.toggle("collapsed");
@@ -922,12 +905,10 @@ document.querySelectorAll(".section h3.game-title").forEach(title => {
     });
 });
 
-// --- Modal Close Button ---
 document.querySelector("#country-progress-modal .close-modal-btn").addEventListener("click", () => {
     document.getElementById("country-progress-modal").classList.remove("active");
 });
 
-// --- News Popup Handling ---
 function showNewsPopup(fullNewsText) {
     document.getElementById("popupNewsTitle").innerText = "Última hora";
     document.getElementById("popupNewsDescription").innerText = fullNewsText;
@@ -943,7 +924,6 @@ function closeNewsPopup() {
 document.querySelector(".close-news-btn").addEventListener("click", closeNewsPopup);
 document.getElementById("newsOverlay").addEventListener("click", closeNewsPopup);
 
-// --- Menu Toggle Logic ---
 const toggleButton = document.getElementById("menu-toggle-button");
 function setMenuIcon() {
     const icon = toggleButton.querySelector("i");
@@ -971,7 +951,6 @@ toggleButton.addEventListener("click", () => {
     setMenuIcon();
 });
 
-// --- Responsive Menu Button Adjustment ---
 function adjustMenuToggleButton() {
     const isPortraitMobile = window.innerWidth <= 768 && window.innerHeight > window.innerWidth;
     if (isPortraitMobile) {
@@ -993,7 +972,6 @@ window.addEventListener("load", adjustMenuToggleButton);
 window.addEventListener("resize", adjustMenuToggleButton);
 window.addEventListener("orientationchange", adjustMenuToggleButton);
 
-// --- News Generation Interval ---
 setInterval(() => {
     if (!gameActive || !bandName || !countriesData) return;
     if (Math.random() < 0.8) {
@@ -1017,7 +995,6 @@ setInterval(() => {
     }
 }, 300000);
 
-// --- Game Logic Interval ---
 setInterval(() => {
     if (!gameActive || !bandName || !countriesData) return;
     let totalEsbirrosNoDominados = 0;
@@ -1090,7 +1067,6 @@ setInterval(() => {
     }
 }, 500);
 
-// --- UI Refresh Interval ---
 setInterval(() => {
     let diffMoney = playerMoney - displayedMoney;
     if (Math.abs(diffMoney) > 0.1 && Math.abs(playerMoney) < 1e9) displayedMoney += diffMoney * 0.3;
@@ -1111,3 +1087,42 @@ setInterval(() => {
     document.getElementById("bannerArrested").innerText = formatNumber(displayedArrested);
     if (currentIso) document.getElementById("bannerEsbirros").innerText = formatNumber(displayedEsbirros);
 }, ANIMATION_REFRESH_RATE);
+
+function handleAuthStateChanged(user) {
+    currentUser = user;
+    if (user) {
+        console.log("Usuario autenticado:", user.uid);
+        loadGame(user.uid)
+    } else {
+        console.log("Usuario no autenticado.");
+        document.getElementById('auth-container').classList.remove('hidden');
+    }
+}
+
+fetch("./countriesWithPopulation.geo.json").then(r => r.json()).then(data => {
+    countriesData = data;
+    geojsonLayer = L.geoJSON(data, {
+        style: () => ({ color: "#555", weight: 1, fillColor: "#f0f0f0", fillOpacity: 0.2 }),
+        onEachFeature: (feat, layer) => {
+            layer.on({
+                click: onCountryClick,
+                mouseover: onCountryMouseOver,
+                mouseout: onCountryMouseOut
+            });
+        }
+    }).addTo(map);
+    let sel = document.getElementById("register-start-country");
+    data.features.forEach(f => {
+        let iso = f.id;
+        let nm = f.properties.name;
+        let opt = document.createElement("option");
+        opt.value = iso;
+        opt.textContent = nm;
+        sel.appendChild(opt);
+    });
+    logMessage("GeoJSON cargado correctamente.");
+    initializeAuth(handleAuthStateChanged);
+}).catch(err => {
+    addNotification("Error al cargar geojson:" + err.message, "general");
+    logMessage("Error al cargar geojson: " + err.message);
+});
