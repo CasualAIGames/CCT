@@ -42,6 +42,15 @@ const NOT_ENOUGH_MONEY_COOLDOWN = 10000;
 const leaders = [{ id: "leader1", image: "images/man.jfif" }, { id: "leader2", image: "images/woman.jfif" }];
 let currentUser = null;
 
+// --- Failed Images Cache ---
+const failedImages = new Set();
+
+// --- Image Error Handler ---
+function handleImageError(imgElement, imagePath) {
+    imgElement.style.display = 'none';
+    failedImages.add(imagePath);
+}
+
 // --- Utility Functions ---
 function logMessage(message) {
     const logEntry = new Date().toISOString() + ": " + message;
@@ -164,6 +173,7 @@ function renderStats() {
     }
     banner.classList.add('subtle-banner');
 }
+
 function costOf(u) {
     return Math.floor(u.baseCost * Math.pow(1.15, u.times));
 }
@@ -184,6 +194,8 @@ function shouldShow(up, upgradesArray) {
     if (prev.times >= 10) return true;
     return false;
 }
+
+// --- Upgrade Rendering with Image Handling ---
 function renderUpgradesList(id, upgradesArray, buyFunc, type) {
     let container = document.getElementById(id);
     container.innerHTML = "";
@@ -205,12 +217,27 @@ function renderUpgradesList(id, upgradesArray, buyFunc, type) {
             locked = '<span class="lock-icon"><i class="fas fa-lock"></i><span class="tooltiptext">Desbloqueado al comprar 10 veces la mejora rank "' + (up.rank - 1) + '"</span></span>';
         }
         let effectText = "";
-        // ... (código existente para effectText)
+        if (type === "money") {
+            effectText = '<div class="effect"><span class="value">' + formatNumber(up.effectMoney) + '</span> <span class="unit">/click</span>' + (up.effectMoneySec ? '<span class="value">+' + formatNumber(up.effectMoneySec) + '</span><span class="unit">/seg</span>' : '') + '</div>';
+        } else if (type === "esbirros") {
+            effectText = '<div class="effect"><span class="value">' + formatNumber(up.effectEsb) + '</span> <span class="unit">esb/tick</span></div>';
+        } else if (type === "police" && up.effectPolice !== 0) {
+            let sign = up.effectPolice > 0 ? ("+" + up.effectPolice) : up.effectPolice;
+            effectText = '<div class="effect">Ajuste Policía: <span class="value">' + sign + "</span></div>";
+        } else if (type === "weapons") {
+            if (up.type === "economic") {
+                effectText = '<div class="effect">+<span class="value">' + (up.effect * 100).toFixed(1) + '</span><span class="unit">%</span> por click</div>';
+            } else if (up.type === "military") {
+                effectText = '<div class="effect">+<span class="value">' + (up.effect * 100).toFixed(1) + '</span><span class="unit">%</span> esbirros/seg</div>';
+            } else {
+                effectText = '<div class="effect">' + up.desc + "</div>";
+            }
+        }
 
-        // **Manejo de imágenes**
+        // **Manejo de imágenes con caché de fallos**
         let imageHTML = '';
-        if (up.image) { // Verifica si la mejora tiene una propiedad 'image'
-            imageHTML = `<img src="${up.image}" alt="${up.name}" class="upgrade-image" onerror="this.style.display='none'"/>`;
+        if (up.image && !failedImages.has(up.image)) {
+            imageHTML = `<img src="${up.image}" alt="${up.name}" class="upgrade-image" onerror="handleImageError(this, '${up.image}')"/>`;
         }
 
         let itemContent = locked + '<div class="upgrade-header">' + imageHTML + '<div class="upgrade-title"><div class="name">' + up.name + '</div><div class="cost">Coste: ' + formatNumber(cost) + '</div></div></div><div class="upgrade-details"><div class="desc">' + up.desc + "</div>" + effectText + (type !== "weapons" ? '<div class="times">Veces: ' + up.times + "</div>" : "") + "</div>";
@@ -234,6 +261,7 @@ function renderUpgradesList(id, upgradesArray, buyFunc, type) {
         container.appendChild(item);
     }
 }
+
 function renderAbilityColumn(id, abilitiesArray, buyFunc) {
     const container = document.getElementById(id);
     container.innerHTML = "";
@@ -257,7 +285,13 @@ function renderAbilityColumn(id, abilitiesArray, buyFunc) {
         } else {
             effectText = '<div class="effect">' + ability.desc + "</div>";
         }
+
+        // **Manejo de imágenes con caché de fallos**
         let imageHTML = '';
+        if (ability.image && !failedImages.has(ability.image)) {
+            imageHTML = `<img src="${ability.image}" alt="${ability.name}" class="upgrade-image" onerror="handleImageError(this, '${ability.image}')"/>`;
+        }
+
         let itemContent = locked + '<div class="upgrade-header">' + imageHTML + '<div class="upgrade-title"><div class="name">' + ability.name + '</div><div class="cost">Coste: ' + formatNumber(cost) + '</div></div></div><div class="upgrade-details"><div class="desc">' + ability.desc + "</div>" + effectText + '<div class="times">Veces: ' + ability.times + "</div></div>";
         item.innerHTML = itemContent;
         if (canBuy && isUnlocked(ability, abilitiesArray)) {
@@ -279,11 +313,13 @@ function renderAbilityColumn(id, abilitiesArray, buyFunc) {
         container.appendChild(item);
     }
 }
+
 function renderAbilities() {
     renderAbilityColumn("economicAbilities", economicAbilities, buyWeaponUpgrade);
     renderAbilityColumn("socialAbilities", socialAbilities, buyWeaponUpgrade);
     renderAbilityColumn("militaryAbilities", militaryAbilities, buyWeaponUpgrade);
 }
+
 function renderWorldList() {
     const list = document.getElementById("country-list");
     list.innerHTML = "";
@@ -315,6 +351,7 @@ function renderWorldList() {
         if (currentIso) showCountryDetail(currentIso);
     }
 }
+
 function showCountryDetail(iso) {
     currentIso = iso;
     let st = countryStatus[iso];
@@ -326,6 +363,8 @@ function showCountryDetail(iso) {
     refreshGeoStyle();
     renderStats();
 }
+
+// --- Rendering Upgrades ---
 function renderUpgrades() {
     renderUpgradesList("moneyUpgrades", moneyUpgrades, buyMoneyUpgrade, "money");
     renderUpgradesList("esbirrosUpgrades", esbirrosUpgrades, buyEsbirrosUpgrade, "esbirros");
@@ -418,9 +457,11 @@ function buyWeaponUpgrade(u) {
     }
     saveGame();
 }
+
 let expansionProbabilityMultiplier = 1;
 let policeResistance = 0;
 let esbirrosPerTickMultiplier = 1;
+
 function applyWeaponEffect(u) {
     if (u.id.startsWith("probabilityBoost")) expansionProbabilityMultiplier *= u.effect;
     if (u.id.startsWith("policeResistance")) policeResistance += u.effect;
@@ -431,6 +472,7 @@ function applyWeaponEffect(u) {
         esbirrosPerTickMultiplier *= u.effect;
     }
 }
+
 function maybeRaiseStars(level) {
     if (policeStars >= 5) return;
     let chance = level === 1 ? 0.05 : 0.1;

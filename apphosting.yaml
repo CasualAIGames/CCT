@@ -1,0 +1,2 @@
+buildpacks:
+ - google-gae-20/static
