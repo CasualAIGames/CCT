@@ -17,7 +17,7 @@ const firebaseConfig = {
   projectId: "click-and-conquer-tycoon",
   storageBucket: "click-and-conquer-tycoon.firebasestorage.app",
   messagingSenderId: "800609694823",
-  appId: "1:800609694823:web:03d00cadfcf10a991cd0c2",
+  appId: "1:800609694823:web:79a8581b217bb6f31cd0c2",
   measurementId: "G-7MYX9Q60B8"
 };
 
