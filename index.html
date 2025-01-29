@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Click & Conquer Tycoon</title>
+  <meta name="description" content="Click & Conquer Tycoon: Domina el mundo paso a paso en este adictivo juego de estrategia incremental. Crea tu banda, expande tu imperio y conviértete en el magnate definitivo.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="src/css/style.css">
+
+  <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+
+  <link rel="preload" href="assets/images/iconodinero.png" as="image">
+</head>
+<body>
+  <div id="app-container">
+
+    <div id="sidebar">
+      <h2 class="game-title main-title">Click & Conquer Tycoon</h2>
+      <div class="player-card">
+        <div class="leader-card-info">
+          <img id="leaderImage" src="" alt="Imagen del Líder" class="leader-image">
+          <div class="band-info">
+            <span class="band-info-item">
+              <i class="fas fa-users"></i>
+              <span id="bandInfoBand"></span>
+            </span>
+            <span class="band-info-item">
+              <i class="fas fa-user"></i>
+              <span id="bandInfoLeader"></span>
+            </span>
+            <span class="band-info-item">
+              <img src="assets/images/earth.png" alt="Icono de Mapamundi" class="country-icon">
+              <span id="bandInfoCountry"></span>
+            </span>
+
+            <span class="band-info-item police-container">
+              <img src="assets/images/policia.png" alt="Icono de Policía" class="police-icon">
+              <span id="playerStars" class="stars">
+                <span class="progress-bar">
+                  <span class="progress"></span>
+                </span>
+                <span class="star"></span>
+                <span class="star"></span>
+                <span class="star"></span>
+                <span class="star"></span>
+                <span class="star"></span>
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <div class="money-actions">
+          <button class="btn" id="btnMoneyClick">Generar Dinero</button>
+        </div>
+      </div>
+
+      <div class="tab-buttons">
+        <button class="tab-button active" data-tab="upgrades">
+          <img src="assets/images/inversiones.png" alt="Icono de Inversiones" class="tab-icon">
+        </button>
+        <button class="tab-button" data-tab="abilities">
+          <img src="assets/images/mejoras.png" alt="Icono de Mejoras" class="tab-icon">
+        </button>
+        <button class="tab-button" data-tab="world">
+          <img src="assets/images/earth.png" alt="Icono de Mundo" class="tab-icon">
+        </button>
+      </div>
+
+      <div class="tab-content active" id="upgrades">
+        <div class="section" id="moneySection">
+          <h3 class="game-title">
+            Operaciones de Dinero <i class="fas fa-chevron-down"></i>
+          </h3>
+          <div id="moneyUpgrades"></div>
+        </div>
+
+        <div class="section" id="esbirrosSection">
+          <h3 class="game-title">
+            Operaciones de Esbirros <i class="fas fa-chevron-down"></i>
+          </h3>
+          <div id="esbirrosUpgrades"></div>
+        </div>
+
+        <div class="section" id="policeSection">
+          <h3 class="game-title">
+            Operaciones Anti-Policía <i class="fas fa-chevron-down"></i>
+          </h3>
+          <div id="policeUpgrades"></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="abilities">
+        <div class="abilities-grid">
+          <div class="ability-column">
+            <h3 class="game-title"><i class="fas fa-hand-holding-usd"></i> Económicas</h3>
+            <div id="economicAbilities"></div>
+          </div>
+          <div class="ability-column">
+            <h3 class="game-title"><i class="fas fa-user-friends"></i> Sociales</h3>
+            <div id="socialAbilities"></div>
+          </div>
+          <div class="ability-column">
+            <h3 class="game-title"><i class="fas fa-shield-alt"></i> Militares</h3>
+            <div id="militaryAbilities"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="world">
+        <div class="sidebar-content">
+          <h2 class="game-title">Progreso de Países</h2>
+          <div class="country-list-container">
+            <ul id="country-list"></ul>
+          </div>
+          <div id="country-detail">
+            <h3 class="game-title" id="detailCountryName"></h3>
+            <div id="detail-stats">
+              <p>Población: <span id="detailPopulation">0</span></p>
+              <p>Esbirros: <span id="detailEsbirros" class="esbirro-color">0</span></p>
+              <p>Detenidos: <span id="detailArrested" class="arrested-color">0</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="map-container">
+      <div id="map">
+        <div id="country-progress-modal" class="modal">
+          <div class="modal-content">
+            <h2>Progreso Global</h2>
+            <ul id="country-progress-list"></ul>
+            <span class="close-modal-btn">×</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="statsBanner" class="hidden">
+      <div class="banner-container">
+        <div class="banner-stats">
+          <div class="stat-item money-container">
+            <img src="assets/images/dinero.png" alt="Icono de Dinero" class="banner-icon">
+            <span id="bannerMoney">100</span>
+            <div class="money-per-second-container">
+              +<span id="moneyPerSecond">0</span> $/seg
+            </div>
+          </div>
+
+          <div class="stat-item esbirro-container">
+            <img src="assets/images/esbirro.png" alt="Icono de Esbirros" class="banner-icon">
+            <span id="bannerEsbirros">0</span>
+            <div class="esbirros-per-second-container">
+              +<span id="esbirrosPerSecond">0</span> 
+            </div>
+          </div>
+
+          <div class="stat-item arrested-container">
+            <img src="assets/images/policia.png" alt="Icono de Detenidos" class="banner-icon">
+            <span id="bannerArrested">0</span>
+            <div class="arrested-per-second-container">
+              +<span id="arrestedPerSecond">0</span> 
+            </div>
+          </div>
+        </div>
+        <div class="banner-actions"></div>
+      </div>
+    </div>
+
+    <button id="menu-toggle-button" class="menu-toggle-button">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+
+    <div id="auth-container">
+      <div class="auth-form" id="login-form-container">
+        <h2 class="auth-title">Login</h2>
+        <form id="login-form">
+          <div class="input-group">
+            <label>Email:</label>
+            <input type="email" id="login-email" required>
+          </div>
+          <div class="input-group">
+            <label>Contraseña:</label>
+            <input type="password" id="login-password" required>
+          </div>
+          <button type="submit" class="btn">Iniciar Sesión</button>
+        </form>
+        <p>¿No tienes cuenta? <button id="show-register" class="link-button">Regístrate</button></p>
+      </div>
+
+      <div class="auth-form hidden" id="register-form-container">
+        <h2 class="auth-title">Registro</h2>
+        <form id="register-form">
+          <div class="input-group">
+            <label>Email:</label>
+            <input type="email" id="register-email" required>
+          </div>
+          <div class="input-group">
+            <label>Contraseña:</label>
+            <input type="password" id="register-password" required>
+          </div>
+          <div class="input-group">
+            <label>Confirmar Contraseña:</label>
+            <input type="password" id="register-password-confirm" required>
+          </div>
+          <div class="input-group">
+            <label>Nombre de la Banda:</label>
+            <input type="text" id="register-band-name" placeholder="Ej: Los Fierros" required>
+          </div>
+          <div class="input-group">
+            <label>País Inicial:</label>
+            <select id="register-start-country" required>
+              <option value="">-- Elige País --</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Selecciona tu líder:</label>
+            <div class="leader-list" id="register-leader-list">
+              <div class="leader-card">
+                <div class="leader-card-inner" data-leader-id="leader1">
+                  <img src="assets/images/man.jfif" alt="Líder Masculino" class="leader-card-image" data-leader-id="leader1">
+                </div>
+              </div>
+              <div class="leader-card">
+                <div class="leader-card-inner" data-leader-id="leader2">
+                  <img src="assets/images/woman.jfif" alt="Líder Femenina" class="leader-card-image" data-leader-id="leader2">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Nombre del Líder:</label>
+            <input type="text" id="register-leader-name" placeholder="Ejemplo: Paco" required>
+          </div>
+          <button type="submit" class="btn">Registrarse y Comenzar</button>
+        </form>
+        <p>¿Ya tienes cuenta? <button id="show-login" class="link-button">Inicia Sesión</button></p>
+      </div>
+    </div>
+
+    <div id="notificationContainer"></div>
+
+    <div id="leaderSelectPopup" class="leader-select-popup hidden">
+      <div class="leader-select-content">
+        <span class="close-leader-btn">×</span>
+        <h2 class="leader-select-title">Selecciona tu líder</h2>
+        <div class="leader-list" id="leaderList"></div>
+        <div class="input-group hidden" id="leaderNameGroup">
+          <label>Nombre del Líder:</label>
+          <input type="text" id="leaderNameInput" placeholder="Ejemplo: Paco">
+        </div>
+        <button type="button" class="btn hidden" id="btnStartGame">Comenzar Juego</button>
+      </div>
+    </div>
+
+    <div id="newsPopup" class="news-popup hidden">
+      <div class="news-content">
+        <span class="close-news-btn">×</span>
+        <h3 class="news-title" id="popupNewsTitle"></h3>
+        <p class="news-description" id="popupNewsDescription"></p>
+      </div>
+    </div>
+    <div id="newsOverlay" class="overlay hidden"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script src="src/js/main.js" type="module"></script>
+  </div>
+</body>
+</html>
