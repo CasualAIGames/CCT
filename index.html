@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="src/css/style.css">
 
   <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="preload" href="assets/images/iconodinero.png" as="image">
 </head>
 <body>
@@ -147,7 +147,7 @@
             <img src="assets/images/dinero.png" alt="Icono de Dinero" class="banner-icon">
             <span id="bannerMoney">100</span>
             <div class="money-per-second-container">
-              +<span id="moneyPerSecond">0</span> $/seg
+              +<span id="moneyPerSecond">0</span> 
             </div>
           </div>
 
@@ -265,9 +265,6 @@
       </div>
     </div>
     <div id="newsOverlay" class="overlay hidden"></div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <script src="src/js/main.js" type="module"></script>
   </div>
 </body>

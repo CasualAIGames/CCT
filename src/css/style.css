@@ -80,7 +80,11 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #000;
+  /* Fondo ligeramente más oscuro para el mapa */
+  background-color: #080808; /* Cambiado a un negro más suave */
+  /* Borde pixelado para el contenedor del mapa */
+  border: 2px solid #333;
+  box-shadow: 0 0 0 2px #333; /* Sombra interior para efecto pixelado */
 }
 
 #map,
@@ -231,33 +235,34 @@ button {
 
 @media (min-width: 769px) {
   body.sidebar-active #statsBanner {
-    left: calc(50% - 150px);
-    transform: translateX(-50%);
-    width: 70%;
-    max-width: 1000px;
+      left: calc(50% - 150px);
+      transform: translateX(-50%);
+      width: 70%;
+      max-width: 1000px;
   }
 }
 
 @media (min-width: 1200px) {
   #statsBanner {
-    font-size: 0.8em;
-    padding: 8px 10px;
-    font-size: 0.95em;
+      font-size: 0.8em;
+      padding: 8px 10px;
+      font-size: 0.95em;
   }
+
   .banner-icon {
-    width: 28px;
-    height: 28px;
+      width: 28px;
+      height: 28px;
   }
 }
 
 @media (max-width: 768px) {
   #statsBanner {
-    top: 0 !important;
-    left: 50%;
-    transform: translate(-50%, 0);
-    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.25);
-    border-radius: 0 0 8px 8px;
-    font-size: 1.5em;
+      top: 0 !important;
+      left: 50%;
+      transform: translate(-50%, 0);
+      box-shadow: 0 2px 3px rgba(0, 0, 0, 0.25);
+      border-radius: 0 0 8px 8px;
+      font-size: 1.5em;
   }
 }
 
@@ -389,18 +394,18 @@ button {
 
 @media (min-width: 769px) {
   #menu-toggle-button {
-    top: 10px;
-    left: 10px;
-    border-radius: 50%;
-    font-size: 1.5em; 
+      top: 10px;
+      left: 10px;
+      border-radius: 50%;
+      font-size: 1.5em;
   }
 }
 
 @media (max-width: 768px) {
   #menu-toggle-button {
-    top: 7px;
-    right: 10px;
-    border-radius: 6px;
+      top: 7px;
+      right: 10px;
+      border-radius: 6px;
   }
 }
 
@@ -455,12 +460,13 @@ body.sidebar-active #notificationContainer {
 
 @keyframes slideDownNotification {
   from {
-    opacity: 0;
-    transform: translateY(-10px); 
+      opacity: 0;
+      transform: translateY(-10px);
   }
+
   to {
-    opacity: 1;
-    transform: translateY(25px); 
+      opacity: 1;
+      transform: translateY(25px);
   }
 }
 
@@ -470,12 +476,13 @@ body.sidebar-active #notificationContainer {
 
 @keyframes slideOutNotification {
   from {
-    opacity: 1;
-    transform: translateY(0);
+      opacity: 1;
+      transform: translateY(0);
   }
+
   to {
-    opacity: 0;
-    transform: translateY(-20px);
+      opacity: 0;
+      transform: translateY(-20px);
   }
 }
 
@@ -504,21 +511,21 @@ body.sidebar-active #notificationContainer {
 
 .close-btn {
   cursor: pointer;
-  font-weight: bolder; 
-  font-size: 1.2em; 
+  font-weight: bolder;
+  font-size: 1.2em;
   transition: color 0.2s ease;
-  padding: 6px 8px; 
-  color: #fff; 
+  padding: 6px 8px;
+  color: #fff;
   text-shadow: 1px 1px 2px #000;
   order: 1;
   margin-left: auto;
-  border-radius: 4px; 
-  background-color: rgba(0, 0, 0, 0.3); 
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.3);
 }
 
 .close-btn:hover {
   color: #eee;
-  background-color: rgba(0, 0, 0, 0.5); 
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 #bannerMoney.money-flash,
@@ -529,13 +536,15 @@ body.sidebar-active #notificationContainer {
 
 @keyframes moneyFlash {
   0% {
-    color: #00ff00;
+      color: #00ff00;
   }
+
   50% {
-    color: #fff;
+      color: #fff;
   }
+
   100% {
-    color: #00ff00;
+      color: #00ff00;
   }
 }
 
@@ -565,12 +574,13 @@ body.sidebar-active #notificationContainer {
 
 @keyframes fadeIn {
   from {
-    opacity: 0;
-    transform: translateY(-10px);
+      opacity: 0;
+      transform: translateY(-10px);
   }
+
   to {
-    opacity: 1;
-    transform: translateY(0);
+      opacity: 1;
+      transform: translateY(0);
   }
 }
 
@@ -581,8 +591,8 @@ body.sidebar-active #notificationContainer {
 .upgrade-item {
   display: grid;
   grid-template-areas:
-    "title title title"
-    "image details button";
+      "title title title"
+      "image details button";
   grid-template-columns: 70px 1fr 100px;
   background-color: #3a3a3a;
   color: #fff;
@@ -882,35 +892,6 @@ body.sidebar-active #notificationContainer {
   color: white;
 }
 
-.leader-select-popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  z-index: 6000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.leader-select-popup.hidden {
-  display: none;
-}
-
-.leader-select-content {
-  background-color: #222;
-  padding: 12px;
-  border-radius: 6px;
-  width: 90%;
-  max-width: 320px;
-  position: relative;
-  max-height: 80vh;
-  overflow-y: auto;
-  margin: 0 auto;
-  animation: fadeInUp 0.5s ease forwards;
-}
 
 .close-leader-btn {
   position: absolute;
@@ -1116,23 +1097,25 @@ body.sidebar-active #notificationContainer {
 
 @keyframes fadeInNews {
   from {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.9);
   }
+
   to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
   }
 }
 
 @keyframes fadeInUp {
   from {
-    opacity: 0;
-    transform: translateY(10px);
+      opacity: 0;
+      transform: translateY(10px);
   }
+
   to {
-    opacity: 1;
-    transform: translateY(0);
+      opacity: 1;
+      transform: translateY(0);
   }
 }
 
@@ -1155,7 +1138,6 @@ body.sidebar-active #notificationContainer {
   box-shadow: 0 0 5px #FFD700;
 }
 
-/* -- PLAYER CARD ESTILO FICHA PRESIDIARIO -- */
 .player-card {
   background: linear-gradient(145deg, #2e2e2e, #252525);
   box-shadow: 4px 4px 8px #1d1d1d, -4px -4px 8px #333333;
@@ -1166,7 +1148,6 @@ body.sidebar-active #notificationContainer {
   flex-direction: column;
   gap: 6px;
   position: relative;
-  /* Parecer un "wanted" / "rap sheet" */
 }
 
 .leader-card-info {
@@ -1265,56 +1246,6 @@ body.sidebar-active #notificationContainer {
   position: relative;
 }
 
-/* Heat/Tensión Bar Container */
-.heat-bar-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  border: 1px dashed #444;
-  border-radius: 8px;
-  padding: 6px;
-  background-color: #2a2a2a;
-  margin-top: 6px;
-  position: relative;
-}
-
-.heat-bar-label {
-  font-family: 'Pricedown', sans-serif;
-  font-size: 0.8em;
-  color: #ff5555;
-  margin-bottom: 5px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.heat-bar {
-  width: 100%;
-  height: 10px;
-  background-color: #444;
-  border-radius: 5px;
-  position: relative;
-  overflow: hidden;
-}
-
-.heat-bar-fill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 0%;
-  background-color: red;
-  border-radius: 5px;
-  transition: width 0.3s ease;
-}
-
-.heat-bar-value {
-  font-family: 'Pricedown', sans-serif;
-  color: #ff9999;
-  font-size: 0.7em;
-  margin-top: 4px;
-}
-
-/* Police stars container */
 .player-card #playerStars .progress-bar {
   background-color: #444;
   height: 5px;
@@ -1341,16 +1272,16 @@ body.sidebar-active #notificationContainer {
   height: 9px;
   background-color: #fdd835;
   clip-path: polygon(
-    50% 0%,
-    61% 35%,
-    98% 35%,
-    68% 57%,
-    79% 91%,
-    50% 70%,
-    21% 91%,
-    32% 57%,
-    2% 35%,
-    39% 35%
+      50% 0%,
+      61% 35%,
+      98% 35%,
+      68% 57%,
+      79% 91%,
+      50% 70%,
+      21% 91%,
+      32% 57%,
+      2% 35%,
+      39% 35%
   );
   margin-left: 1px;
   opacity: 0;
@@ -1358,7 +1289,6 @@ body.sidebar-active #notificationContainer {
   transition: opacity 0.3s ease;
 }
 
-/* List of conquered/expanded countries */
 .country-list-container {
   border: 1px solid #444;
   border-radius: 8px;
@@ -1444,114 +1374,115 @@ body.sidebar-active #notificationContainer {
   filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.5));
 }
 
+/* Media Queries para Responsive */
 @media (max-width: 768px) {
   #statsBanner {
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 1200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 1200px;
   }
 
   .banner-container {
-    flex-direction: row;
+      flex-direction: row;
   }
 
   .banner-stats {
-    flex-wrap: nowrap;
-    justify-content: space-around;
-    padding: 3px 0;
-    border-right: none;
+      flex-wrap: nowrap;
+      justify-content: space-around;
+      padding: 3px 0;
+      border-right: none;
   }
 
   .stat-item {
-    margin: 0;
-    font-size: 0.8em;
-    padding: 2px 3px;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    justify-content: center;
-    gap: 2px;
+      margin: 0;
+      font-size: 0.8em;
+      padding: 2px 3px;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      justify-content: center;
+      gap: 2px;
   }
 
   .stat-item i {
-    font-size: 1em;
-    margin-bottom: 0;
-    margin-right: 0;
+      font-size: 1em;
+      margin-bottom: 0;
+      margin-right: 0;
   }
 
   .stat-item span {
-    font-size: 1em;
-    margin-right: 0;
+      font-size: 1em;
+      margin-right: 0;
   }
 
   .money-per-second-container,
   .esbirros-per-second-container,
   .arrested-per-second-container {
-    font-size: 0.6em;
-    margin-top: 2px;
-    margin-left: 0;
-    width: 100%;
-    text-align: center;
+      font-size: 0.6em;
+      margin-top: 2px;
+      margin-left: 0;
+      width: 100%;
+      text-align: center;
   }
 
   #sidebar {
-    width: 100%;
-    padding-bottom: 35px;
-    transform: translateY(100%);
-    transition: transform 0.4s ease;
-    bottom: 0;
-    top: auto;
-    height: auto;
-    max-height: 50vh;
-    border-left: none;
-    border-top: 2px solid #555;
-    right: auto;
-    left: 0;
-    overflow-y: auto !important;
+      width: 100%;
+      padding-bottom: 35px;
+      transform: translateY(100%);
+      transition: transform 0.4s ease;
+      bottom: 0;
+      top: auto;
+      height: auto;
+      max-height: 50vh;
+      border-left: none;
+      border-top: 2px solid #555;
+      right: auto;
+      left: 0;
+      overflow-y: auto !important;
   }
 
   #sidebar.active {
-    transform: translateY(0);
+      transform: translateY(0);
   }
 
   #app-container {
-    flex-direction: column;
+      flex-direction: column;
   }
 
   #map-container {
-    flex: 1;
+      flex: 1;
   }
 
   #notificationContainer {
-    top: 70px;
-    width: 90%;
+      top: 70px;
+      width: 90%;
   }
 }
 
 @media (min-width: 769px) {
   #sidebar {
-    width: 30%;
-    min-width: 380px;
-    height: 100vh;
-    position: fixed;
+      width: 30%;
+      min-width: 380px;
+      height: 100vh;
+      position: fixed;
   }
 
   #app-container {
-    margin-right: 30%;
+      margin-right: 30%;
   }
 
   body.sidebar-active #statsBanner {
-    left: calc(50% - 150px);
-    transform: translateX(-50%);
-    width: 70%;
-    max-width: 1000px;
+      left: calc(50% - 150px);
+      transform: translateX(-50%);
+      width: 70%;
+      max-width: 1000px;
   }
 
   body.sidebar-active #notificationContainer {
-    left: calc(50% - 150px);
-    transform: translateX(-50%);
-    width: 80%;
+      left: calc(50% - 150px);
+      transform: translateX(-50%);
+      width: 80%;
   }
 }
 
@@ -1669,4 +1600,47 @@ body.sidebar-active .notification {
   text-align: center;
   z-index: 3;
   position: relative;
+}
+
+.leaflet-container {
+  font-family: 'Pricedown', sans-serif; 
+  color: #eee; 
+  cursor: crosshair;
+}
+
+.leaflet-control-attribution {
+  display: none; 
+}
+
+.leaflet-popup-content-wrapper {
+  background-color: #2a2a2a; 
+  color: #eee;
+  border: 2px solid #555; 
+  box-shadow: 2px 2px 0 #333;
+  border-radius: 0; 
+  padding: 10px;
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.leaflet-tooltip {
+  z-index: 15001 !important;
+  background-color: rgba(40, 40, 40, 0.9); 
+  color: #eee;
+  border: 2px solid #555; 
+  box-shadow: 2px 2px 0 #333;
+  border-radius: 0;
+  padding: 6px 10px; 
+  font-size: 0.9em;
+  font-family: 'Pricedown', sans-serif; 
+}
+
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+  border: none;
 }

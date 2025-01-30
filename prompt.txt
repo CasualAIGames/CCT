@@ -1,5 +1,0 @@
-Vale, parece que ha mejorado la cosa, sin embargo (tengo una versión de prueba con dinero infinito) he estado probando estos arreglos y al principio la policia pese a solo estar mi banda presente en un país, la policía subía demasiado ráido con mis acciones, cosa que debería pasar más adelante cuando se tiene presencia en más países.
-
-Y ha habido un momento en el que los esbirros superaban los 20B de total, lo cual e simposible porque no hay tanta población en el mundo, los detenidos ni los esbirros pueden superar los totales de poblacion (poblacion de cada paises sumada) ni puede haber mas esbirros o detenidos que la población de un país. Debe ir correlacionado con los datos.
-
-además de que cuando eso ha sucedido (es verdad que al tener dinero infinito he comprado muchas mejoras de antipolicia) pero ha habido un momento que no subia ni la tensión policial ni las estrellas, cuando con la rápida expansion que he tenido, la policia deberia haber intentado remontadas.

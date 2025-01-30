@@ -74,7 +74,6 @@ const newsPopupElement = document.getElementById("newsPopup")
 const newsOverlay = document.getElementById("newsOverlay")
 const closeNewsButton = document.querySelector(".close-news-btn")
 const startCountrySelect = document.getElementById("register-start-country")
-const heatBarDecreaseIntervalInput = document.getElementById("heatBarDecreaseInterval")
 const iconMoneyInfo = document.getElementById("iconMoneyInfo")
 const iconEsbirrosInfo = document.getElementById("iconEsbirrosInfo")
 const iconPoliceInfo = document.getElementById("iconPoliceInfo")
@@ -85,7 +84,16 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{noWrap:true}).
 let geojsonLayer = null
 let countriesData = null
 let esbirroMarker = null
-const ANIMATION_REFRESH_RATE = 50
+let newsInterval
+let conqueredCountriesNotification = null
+let activeIcons = []
+let iconsEnabled = false
+let moneyIconsEnabled = false
+let esbirrosIconsEnabled = false
+let policeIconsEnabled = false
+let lastMoneySpawn = 0
+let lastEsbirrosSpawn = 0
+let lastPoliceSpawn = 0
 const NOT_ENOUGH_MONEY_COOLDOWN = 10000
 let BASE_EXPANSION_PROBABILITY = 0.005
 const EXPANSION_DIFFICULTY_FACTOR = 0.1
@@ -96,19 +104,14 @@ const CENTER_POPUP_DURATION = 1500
 const ANIMATION_DURATION = 500
 const SLIDEOUT_ANIMATION_DURATION = 400
 const ICON_ANIMATION_DURATION = 300
-let MONEY_ICON_SPAWN_INTERVAL = 30000
-let ESBIRROS_ICON_SPAWN_INTERVAL = 40000
-let POLICE_ICON_SPAWN_INTERVAL = 45000
-
+const MONEY_ICON_SPAWN_INTERVAL = 30000
+const ESBIRROS_ICON_SPAWN_INTERVAL = 40000
+const POLICE_ICON_SPAWN_INTERVAL = 45000
 const POPULATION_CONTROL_GAME_OVER_THRESHOLD = 51
 const EXPANSION_ANIMATION_CIRCLE_RADIUS_INCREMENT = 1
 const EXPANSION_ANIMATION_CIRCLE_MAX_RADIUS = 100
 const EXPANSION_ANIMATION_INTERVAL_MS = 10
-const POPULATION_EXCEED_WARNING = "POSSIBLE POPULATION EXCEED BUG"
-
-const HEAT_DECREASE_INTERVAL = 10000
 const RECONQUIST_EVENT_DURATION = 60000
-
 const BASE_TENSION_EXPANSION = 15
 const BASE_TENSION_UPGRADE = 2
 
@@ -145,24 +148,14 @@ const defaultGameState = {
   policeUpgrades: policeUpgrades.map(u => ({ times: 0 })),
   weaponsUpgrades: weaponsUpgrades.map(u => ({ times: 0 })),
   firstSession: false,
-  lastMoneyIconSpawn: 0,
-  lastPoliceIconSpawn: 0,
-  lastEsbirrosIconSpawn: 0,
   startingCountryExpansionMultiplier: 1,
   lastHeatDecrease: 0,
   reconquestEvent: null,
-  iconsEnabled: false,
-  moneyIconsEnabled: false,
-  esbirrosIconsEnabled: false,
-  policeIconsEnabled: false,
   lastPoliceEventCheck: 0,
   rescueMinionsActive: false,
   lastStarsValue: 0
 }
 let gameState = { ...defaultGameState }
-let newsInterval
-let conqueredCountriesNotification = null
-let activeIcons = []
 
 const moneyIcon = L.icon({ iconUrl: "assets/images/iconodinero.png", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] })
 const esbirrosIcon = L.icon({ iconUrl: "assets/images/iconoesbirro.png", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] })
@@ -409,7 +402,6 @@ showLoginButton.addEventListener("click", () => {
   loginFormContainer.classList.remove("hidden")
   registerFormContainer.classList.add("hidden")
 })
-
 function renderStats(){
   let netEsb = 0
   if(gameState.totalEsbirrosUpgrades>0 || gameState.lastArrestIncrement>0){
@@ -419,33 +411,29 @@ function renderStats(){
   moneyPerSecondElement.innerText = `${formatNumber(gameState.moneyPerSecond)}/seg`
   esbirrosPerSecondElement.innerText = `${formatNumber(netEsb)} esb/seg`
   arrestedPerSecondElement.innerText = `${formatNumber(gameState.arrestedPerSecond)} det/seg`
-
   playerStarsProgress.style.width = `${Math.min(Math.max((gameState.policeStars/5)*100,0),100)}%`
   playerStarsElements.forEach((s,i) => {
     s.style.opacity = i < gameState.policeStars ? 1 : 0
   })
-
   const totEsb = Object.values(gameState.countryStatus).reduce((a,c) => a + (c.esbirros || 0), 0)
   bannerMoneyElement.innerText = `$${formatNumber(gameState.playerMoney)}`
   bannerArrestedElement.innerText = formatNumber(Math.floor(gameState.totalArrested))
   bannerEsbirrosElement.innerText = formatNumber(Math.floor(totEsb))
-
   bandInfoBandElement.textContent = gameState.bandName
   bandInfoLeaderElement.textContent = gameState.leaderName
   bandInfoCountryElement.textContent = gameState.startCountry
   leaderImgElement.src = gameState.leaderImage || "images/placeholder.png"
-
   statsBanner.classList.toggle("active", !statsBanner.classList.contains("hidden"))
   statsBanner.classList.add("subtle-banner")
   updateHeatUI()
 }
-
 function updatePerSecondStats(){
-  gameState.totalMoneyUpgradesSec = moneyUpgrades.reduce((acc,u) => acc + (u.effectMoneySec || 0)*u.times,0)
+  gameState.totalMoneyUpgradesSec = moneyUpgrades.reduce((acc,u) => acc + (u.effectMoneySec || 0)*u.times, 0)
   gameState.moneyPerSecond = Math.max(0, gameState.totalMoneyUpgradesSec)
   gameState.arrestedPerSecond = gameState.lastArrestIncrement / 5
+  // Añade la línea para que el icono de esbirros obtenga un valor > 0
+  gameState.esbirrosPerSecond = (gameState.totalEsbirrosUpgrades * gameState.esbirrosPerTickMultiplier * (1 + gameState.esbirrosMultiplierPercentage))
 }
-
 function displayInitialMinion(iso){
   if(!iso || !geojsonLayer){
     startNewsGeneration()
@@ -473,10 +461,10 @@ function displayInitialMinion(iso){
           const w = generateWelcomeMessage(gameState)
           showNewsPopup(w.message, w.title, "welcome")
           gameState.firstSession = false
-          gameState.iconsEnabled = true
-          gameState.moneyIconsEnabled = true
-          gameState.esbirrosIconsEnabled = true
-          gameState.policeIconsEnabled = true
+          iconsEnabled = true
+          moneyIconsEnabled = true
+          esbirrosIconsEnabled = true
+          policeIconsEnabled = true
           iconMoneyInfo.classList.remove("hidden")
           iconEsbirrosInfo.classList.remove("hidden")
           iconPoliceInfo.classList.remove("hidden")
@@ -487,8 +475,9 @@ function displayInitialMinion(iso){
     }
   })
 }
-
-const costOf = u => Math.floor(u.baseCost * Math.pow(UPGRADE_COST_MULTIPLIER, u.times))
+function costOf(u){
+  return Math.floor(u.baseCost * Math.pow(UPGRADE_COST_MULTIPLIER, u.times))
+}
 function getPurchasesRemainingForUnlock(up, arr){
   if(up.rank <= 1) return 0
   const prev = arr.filter(x => x.rank===up.rank - 1)
@@ -525,28 +514,27 @@ function createUpgradeElement(u, c, canBuy, bFunc, type, locked, pRem){
   } else if(type === "weapons"){
     effTxt = `<div class="effect">${u.desc}</div>`
   } else if(type === "heat_management"){
-    effTxt = `<div class="effect">Reduce prob. de ganar estrellas</div>`
+    effTxt = `<div class="effect">Reduce prob. de ganar estrellas policiales</div>`
   }
   const imgClass = `upgrade-image ${locked ? "upgrade-image-locked" : ""}`
   const iH = u.image ? `<img src="${u.image}" alt="${u.name}" class="${imgClass}">` : ""
-  d.innerHTML = `
-    ${lockedOverlay}
-    <h5 class="upgrade-title"><span class="name">${u.name}</span></h5>
-    <div class="upgrade-row">
-      <div class="upgrade-image-container">
-        ${iH}
-        ${(!locked && u.times>0) ? `<span class="upgrade-times-overlay">x${u.times}</span>` : ""}
-      </div>
-      <div class="upgrade-details">
-        <p class="desc">${u.desc}</p>
-        ${effTxt}
-      </div>
-      <div class="upgrade-buy-container">
-        <button class="upgrade-buy-button ${!canBuy ? "upgrade-buy-unavailable" : ""} ${locked ? "upgrade-buy-locked" : ""}">
-          ${locked ? "BLOQUEADO" : `BUY ${formatNumber(c)}$`}
-        </button>
-      </div>
-    </div>`
+  d.innerHTML = `${lockedOverlay}
+<h5 class="upgrade-title"><span class="name">${u.name}</span></h5>
+<div class="upgrade-row">
+<div class="upgrade-image-container">
+${iH}
+${(!locked && u.times>0) ? `<span class="upgrade-times-overlay">x${u.times}</span>` : ""}
+</div>
+<div class="upgrade-info-container">
+<p class="upgrade-description">${u.desc}</p>
+${effTxt}
+</div>
+<div class="upgrade-buy-container">
+<button class="upgrade-buy-button ${!canBuy ? "upgrade-buy-unavailable" : ""} ${locked ? "upgrade-buy-locked" : ""}">
+${locked ? "BLOQUEADO" : `BUY ${formatNumber(c)}$`}
+</button>
+</div>
+</div>`
   const bB = d.querySelector(".upgrade-buy-button")
   bB.addEventListener("click", e => {
     e.stopPropagation()
@@ -609,8 +597,6 @@ function renderAbilityColumn(cont, arr, bFunc){
     const eDiv = upEl.querySelector(".effect")
     if(eDiv){
       if(ab.type==="economic"){
-        eDiv.innerHTML = `+<span class="value green-value">${(ab.effect*100).toFixed(1)}</span>% por click`
-      } else if(ab.type==="military"){
         eDiv.innerHTML = `+<span class="value green-value">${(ab.effect*100).toFixed(1)}</span>% esbirros/seg`
       } else if(ab.type==="social"){
         eDiv.innerHTML = `Reduce eventos policiales al comprar mejoras`
@@ -633,7 +619,6 @@ function renderUpgrades(){
   renderUpgradesList(policeUpgradesContainer, policeUpgrades, buyPoliceUpgrade, "police")
   renderAbilities()
 }
-
 async function buyMoneyUpgrade(u){
   const c = costOf(u)
   if(gameState.playerMoney < c) return addNotification("No tienes suficiente dinero.","notEnoughMoney")
@@ -712,21 +697,17 @@ function applyWeaponEffect(u){
     gameState.esbirrosPerTickMultiplier *= u.effect
   }
 }
-
 function increaseStarsWithResistance(base, rank = 1){
   const effective = Math.max(0, base - (base * gameState.policeResistance))
   let starIncrease = 0
   if (effective >= 10) starIncrease = 2
   else if (effective >= 5) starIncrease = 1
   else starIncrease = 0
-
   if (rank >= 3 && starIncrease > 0) starIncrease += 1
   if (rank >= 5 && starIncrease > 0) starIncrease += 1
-
   const newStars = gameState.policeStars + starIncrease
   recalcPoliceStarsFromValue(newStars)
 }
-
 function startReconquestEvent(countryIso){
   if(gameState.reconquestEvent) return
   const st = gameState.countryStatus[countryIso]
@@ -776,17 +757,14 @@ function endReconquestEvent(message){
   }
   gameState.reconquestEvent = null
 }
-
 function attemptRescueMinions(countryIso) {
   if (gameState.rescueMinionsActive) return
   gameState.rescueMinionsActive = true
-
   const upgrade = weaponsUpgrades.find(upg => upg.id === "military-boost-6")
   const baseProbability = upgrade ? upgrade.effect * upgrade.times : 0
   const arrestedCount = gameState.countryStatus[countryIso].arrestedTotal || 0
   const tensionFactor = gameState.policeStars / 5
   const successProbability = Math.max(0, baseProbability - tensionFactor * 0.1)
-
   if (Math.random() < successProbability) {
     const rescuedMinions = Math.ceil(arrestedCount * (0.1 + baseProbability))
     gameState.countryStatus[countryIso].arrestedTotal = Math.max(0, arrestedCount - rescuedMinions)
@@ -795,17 +773,14 @@ function attemptRescueMinions(countryIso) {
   } else {
     addNotification(`¡Fallo en el rescate de aliados en ${gameState.countryStatus[countryIso].countryName}!`, "rescueFail", gameState.countryStatus[countryIso].countryName)
   }
-
   gameState.rescueMinionsActive = false
   renderWorldList()
   renderStats()
   saveGame()
 }
-
 function triggerPoliceActions(){
   if (!gameState.gameActive || !countriesData || Date.now() - gameState.lastPoliceEventCheck < 5000) return
   gameState.lastPoliceEventCheck = Date.now()
-
   const baseEventProbability = gameState.policeStars * 0.05
   if(gameState.policeStars>=1){
     if(Math.random() < baseEventProbability){
@@ -871,7 +846,6 @@ function triggerHideoutRaid(countries, intensity) {
   addNotification(`Redada policial en ${st.countryName}. Esbirros perdidos.`, "hideoutRaid", st.countryName)
   renderWorldList()
 }
-
 btnMoneyClickElement.addEventListener("click", async e => {
   if(!gameState.gameActive) return
   const earn = (gameState.baseMoneyClick + gameState.totalMoneyUpgrades) * (1 + gameState.clickMultiplierPercentage)
@@ -883,7 +857,6 @@ btnMoneyClickElement.addEventListener("click", async e => {
   setTimeout(() => e.target.classList.remove("clicked"), 200)
   await saveGame()
 })
-
 function onCountryClick(e){
   showCountryDetail(e.target.feature.id)
 }
@@ -928,15 +901,8 @@ async function saveGame(){
   delete toSave.currentUser
   delete toSave.policeNotification
   delete toSave.activeIcons
-  delete toSave.lastHeatDecrease
   delete toSave.reconquestEvent
-  delete toSave.iconsEnabled
-  delete toSave.moneyIconsEnabled
-  delete toSave.esbirrosIconsEnabled
-  delete toSave.policeIconsEnabled
-  delete toSave.lastPoliceEventCheck
-  delete toSave.rescueMinionsActive
-  delete toSave.lastStarsValue
+  delete toSave.lastHeatDecrease
   try {
     for(const k in toSave.countryStatus){
       const st = toSave.countryStatus[k]
@@ -945,9 +911,7 @@ async function saveGame(){
       }
     }
     await set(ref(database, `users/${gameState.currentUser.uid}/gameState`), toSave)
-  } catch(e){
-    console.error("Error saving game state:", e)
-  }
+  } catch(e){}
 }
 function loadGame(uid){
   if(!uid) return
@@ -956,7 +920,6 @@ function loadGame(uid){
     const saved = s.val()
     gameState = { ...defaultGameState, ...saved, currentUser: gameState.currentUser }
     gameState.policeNotification = null
-    gameState.activeIcons = []
     moneyUpgrades.forEach((u,i) => u.times = saved.moneyUpgrades?.[i]?.times || 0)
     esbirrosUpgrades.forEach((u,i) => u.times = saved.esbirrosUpgrades?.[i]?.times || 0)
     policeUpgrades.forEach((u,i) => u.times = saved.policeUpgrades?.[i]?.times || 0)
@@ -974,7 +937,7 @@ function loadGame(uid){
     if(gameState.firstSession && gameState.startCountry){
       displayInitialMinion(gameState.startCountry)
     }
-    if(gameState.iconsEnabled){
+    if(iconsEnabled){
       iconMoneyInfo.classList.remove("hidden")
       iconEsbirrosInfo.classList.remove("hidden")
       iconPoliceInfo.classList.remove("hidden")
@@ -1131,12 +1094,11 @@ function startGame(){
     startNewsGeneration()
   }
 }
-
 function spawnIcon(iconType, icon, iso){
-  if(!gameState.iconsEnabled) return
-  if(iconType==="money" && !gameState.moneyIconsEnabled) return
-  if(iconType==="esbirros" && !gameState.esbirrosIconsEnabled) return
-  if(iconType==="police" && !gameState.policeIconsEnabled) return
+  if(!iconsEnabled) return
+  if(iconType==="money" && !moneyIconsEnabled) return
+  if(iconType==="esbirros" && !esbirrosIconsEnabled) return
+  if(iconType==="police" && !policeIconsEnabled) return
   if(!iso || !geojsonLayer) return
   let tLayer
   geojsonLayer.eachLayer(l => {
@@ -1167,18 +1129,19 @@ function spawnIcon(iconType, icon, iso){
             renderStats()
             saveGame()
             generateMoneyNews({bandName: gameState.bandName, leaderName: gameState.leaderName}, gameState.countryStatus[iso]?.countryName||iso)
-              .then(n => showNewsPopup(n, "¡Hallazgo inesperado!"))
+            .then(n => showNewsPopup(n, "¡Hallazgo inesperado!"))
           } else if(iconType==="esbirros"){
             const st = gameState.countryStatus[iso]
             if(st){
               let maxEsbirros = st.popReal - st.arrestedTotal
               if (maxEsbirros < 0) maxEsbirros = 0
-              let currentEsbirros = st.esbirros || 0
+              let currentEsbirros = st.esbirros || 0;
               if (currentEsbirros >= maxEsbirros) {
-                  return
+                return;
               }
-              let canAdd = Math.max(0, maxEsbirros - currentEsbirros)
-              let eG = Math.floor(gameState.esbirrosPerSecond * 10)
+              // eG depende de esbirrosPerSecond que antes siempre era 0:
+              let eG = Math.floor(gameState.esbirrosPerSecond * 100) // MODIFICADO A * 100 PARA DAR X100
+              let canAdd = Math.max(0, maxEsbirros - currentEsbirros); // DEFINICIÓN DE canAdd
               if(eG > canAdd) eG = canAdd
               if(eG > 0){
                 st.esbirros = currentEsbirros + eG
@@ -1188,17 +1151,17 @@ function spawnIcon(iconType, icon, iso){
                 renderWorldList()
                 saveGame()
                 generateEsbirrosNews({bandName:gameState.bandName,leaderName:gameState.leaderName}, st.countryName||iso)
-                  .then(n => showNewsPopup(n, "¡Reclutamiento sorpresa!"))
+                .then(n => showNewsPopup(n, "¡Reclutamiento sorpresa!"))
               }
             }
           } else if(iconType==="police"){
             if(gameState.policeStars>0){
               recalcPoliceStarsFromValue(gameState.policeStars - 1)
-              createCenterPopupAnimation(`-1 Estrella`, "police")
+              createCenterPopupAnimation("-1 Estrella", "police")
               renderStats()
               saveGame()
               generatePoliceNews({bandName:gameState.bandName,leaderName:gameState.leaderName}, gameState.countryStatus[iso]?.countryName||iso)
-                .then(n => showNewsPopup(n, "¡Relajación Policial!"))
+              .then(n => showNewsPopup(n, "¡Relajación Policial!"))
             }
           }
           map.removeLayer(mk)
@@ -1213,32 +1176,32 @@ function spawnIcon(iconType, icon, iso){
   }
 }
 function spawnRandomIcons(){
-  if(!gameState.iconsEnabled) return
+  if(!iconsEnabled) return
   if(!gameState.gameActive || !gameState.bandName || !countriesData) return
   const cIso = Object.keys(gameState.countryStatus).filter(i => gameState.countryStatus[i].control>=0)
   const now = Date.now()
-  if(now - gameState.lastMoneyIconSpawn >= MONEY_ICON_SPAWN_INTERVAL && gameState.moneyIconsEnabled && cIso.length){
+  if(now - lastMoneySpawn >= MONEY_ICON_SPAWN_INTERVAL && moneyIconsEnabled && cIso.length){
     const rM = cIso[Math.floor(Math.random()*cIso.length)]
     spawnIcon("money", moneyIcon, rM)
-    gameState.lastMoneyIconSpawn = now
+    lastMoneySpawn = now
   }
   const dominated = cIso.filter(i => {
-    return gameState.countryStatus[i].dominated && gameState.esbirrosIconsEnabled && (gameState.countryStatus[i].esbirros||0) > (gameState.countryStatus[i].arrestedTotal||0)
+    return gameState.countryStatus[i].dominated && esbirrosIconsEnabled && (gameState.countryStatus[i].esbirros||0) > (gameState.countryStatus[i].arrestedTotal||0)
   })
-  if(now - gameState.lastEsbirrosIconSpawn >= ESBIRROS_ICON_SPAWN_INTERVAL && gameState.esbirrosIconsEnabled){
-    const countriesWithEsbirros = dominated.filter(iso => gameState.countryStatus[iso].esbirros > 0);
+  if(now - lastEsbirrosSpawn >= ESBIRROS_ICON_SPAWN_INTERVAL && esbirrosIconsEnabled){
+    const countriesWithEsbirros = dominated.filter(iso => gameState.countryStatus[iso].esbirros > 0)
     if(countriesWithEsbirros.length){
-        const rE = countriesWithEsbirros[Math.floor(Math.random()*countriesWithEsbirros.length)]
-        spawnIcon("esbirros", esbirrosIcon, rE)
-        gameState.lastEsbirrosIconSpawn = now
+      const rE = countriesWithEsbirros[Math.floor(Math.random()*countriesWithEsbirros.length)]
+      spawnIcon("esbirros", esbirrosIcon, rE)
+      lastEsbirrosSpawn = now
     }
   }
-  if(gameState.policeStars>0 && now - gameState.lastPoliceIconSpawn >= POLICE_ICON_SPAWN_INTERVAL && gameState.policeIconsEnabled && cIso.length){
+  if(gameState.policeStars>0 && now - lastPoliceSpawn >= POLICE_ICON_SPAWN_INTERVAL && policeIconsEnabled && cIso.length){
     const rP = cIso[Math.floor(Math.random()*cIso.length)]
     const st = gameState.countryStatus[rP]
     if(!st || (st.arrestedTotal||0) <= (st.esbirros||0)){
       spawnIcon("police", policeIcon, rP)
-      gameState.lastPoliceIconSpawn = now
+      lastPoliceSpawn = now
     }
   }
 }
@@ -1272,11 +1235,9 @@ setInterval(() => {
     handleReconquestEvent()
   }
   triggerPoliceActions()
-
   let newArrestsGlobal = 0
   let totalWorldPopulation = 0
   let totalEsbirrosInGame = 0
-
   for(const iso in gameState.countryStatus){
     const st = gameState.countryStatus[iso]
     const oldE = st.esbirros || 0
@@ -1285,7 +1246,6 @@ setInterval(() => {
     let arrestRate = 0.01 * Math.max(0, gameState.policeStars - gameState.policeResistance)
     if(gameState.policeStars >= 3) arrestRate *= 1.5
     if(gameState.policeStars >= 5) arrestRate *= 2.5
-
     if(st.control < 20){
       arrestRate *= 0.05
     } else if(st.control < 50){
@@ -1299,16 +1259,13 @@ setInterval(() => {
     let newEsb = oldE + eGain - arrests
     const pop = st.popReal || 0
     totalWorldPopulation += pop
-
     let maxEsbirrosInCountry = Math.max(0, pop - (st.arrestedTotal || 0))
     newEsb = Math.min(newEsb, maxEsbirrosInCountry)
     if(isNaN(newEsb) || !isFinite(newEsb)) newEsb = 0
     if(newEsb < 0) newEsb = 0
-
     newArrestsGlobal += arrests
     st.esbirros = newEsb
     st.arrestedTotal = Math.min((st.arrestedTotal || 0) + arrests, pop)
-
     st.control = pop>0 ? Math.min(100, (st.esbirros/pop)*100) : 0
     if(iso === gameState.startCountry && st.control>=50){
       gameState.startingCountryExpansionMultiplier = 2
@@ -1326,7 +1283,6 @@ setInterval(() => {
   gameState.arrestedPerSecond = gameState.lastArrestIncrement / 5
   gameState.moneyPerSecond = Math.max(0, gameState.totalMoneyUpgradesSec)
   gameState.playerMoney += gameState.moneyPerSecond
-
   if(checkGameOver()){
     gameState.gameActive = false
     stopNewsGeneration()
@@ -1349,7 +1305,6 @@ setInterval(() => {
   renderStats()
   saveGame()
 }, 200)
-
 function generateNewsUpdate(){}
 function startNewsGeneration(){
   if(!newsInterval){
@@ -1362,7 +1317,6 @@ function stopNewsGeneration(){
     newsInterval = null
   }
 }
-
 function showNewsPopup(txt, ttl="Última hora", m="default"){
   newsPopupTitle.innerHTML = ttl
   newsPopupTitle.classList.toggle("welcome-title", m==="welcome")
@@ -1379,7 +1333,6 @@ function closeNewsPopup(){
 }
 closeNewsButton.addEventListener("click", closeNewsPopup)
 newsOverlay.addEventListener("click", closeNewsPopup)
-
 leaderCards.forEach(c => {
   c.addEventListener("click", () => {
     leaderCards.forEach(x => x.classList.remove("selected"))
@@ -1434,25 +1387,24 @@ menuToggleButton.addEventListener("click", () => {
   sidebar.classList.toggle("active")
   setMenuIcon()
 })
-
 fetch("./data/countriesWithPopulation.geo.json")
-  .then(r => r.json())
-  .then(d => {
-    countriesData = d
-    geojsonLayer = L.geoJSON(d, {
-      style: () => ({ color:"#555", weight:1, fillColor:"#f0f0f0", fillOpacity:0.2 }),
-      onEachFeature: (f,l) => l.on({
-        click: onCountryClick,
-        mouseover: onCountryMouseOver,
-        mouseout: onCountryMouseOut
-      })
-    }).addTo(map)
-    d.features.forEach(f => {
-      const opt = document.createElement("option")
-      opt.value = f.id
-      opt.textContent = f.properties.name
-      startCountrySelect.appendChild(opt)
+.then(r => r.json())
+.then(d => {
+  countriesData = d
+  geojsonLayer = L.geoJSON(d, {
+    style: () => ({ color:"#555", weight:1, fillColor:"#f0f0f0", fillOpacity:0.2 }),
+    onEachFeature: (f,l) => l.on({
+      click: onCountryClick,
+      mouseover: onCountryMouseOver,
+      mouseout: onCountryMouseOut
     })
-    initializeAuth(handleAuthStateChanged)
+  }).addTo(map)
+  d.features.forEach(f => {
+    const opt = document.createElement("option")
+    opt.value = f.id
+    opt.textContent = f.properties.name
+    startCountrySelect.appendChild(opt)
   })
-  .catch(() => {})
+  initializeAuth(handleAuthStateChanged)
+})
+.catch(() => {})
