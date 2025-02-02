@@ -553,6 +553,7 @@ body.sidebar-active #notificationContainer {
   background-color: rgba(0, 0, 0, 0.3);
 }
 
+
 .close-btn:hover {
   color: #eee;
   background-color: rgba(0, 0, 0, 0.5);
@@ -1271,34 +1272,7 @@ body.sidebar-active #notificationContainer {
   justify-content: center;
 }
 
-#btnMoneyClick {
-  background-color: #4CAF50;
-  color: white;
-  font-family: 'Pricedown', sans-serif;
-  font-size: 0.9em;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 3px 0 #388E3C;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease;
-  outline: none;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  text-shadow: 1px 1px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
-}
 
-#btnMoneyClick:hover {
-  background-color: #66BB6A;
-  transform: translateY(-1px);
-  box-shadow: 0 5px 0 #388E3C;
-}
-
-#btnMoneyClick:active {
-  background-color: #388E3C;
-  transform: translateY(1px);
-  box-shadow: 0 1px 0 #388E3C;
-}
 
 .player-card .police-container {
   display: flex;
@@ -1748,5 +1722,25 @@ body.sidebar-active .notification {
   100% {
     opacity: 0;
     transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(calc(var(--rotate, 0deg) + 360deg)) scale(0.5);
+  }
+}
+
+/* style.css */
+/* ... existing styles ... */
+
+#btnMoneyClick {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: auto;
+  cursor: pointer; /* Opcional: para indicar que es un botón */
+}
+
+/* Ajuste para responsive design, si es necesario, por ejemplo para pantallas más pequeñas */
+@media (max-width: 768px) {
+  #btnMoneyClick {
+    width: 60px; /* Reduce el tamaño en pantallas pequeñas si es necesario */
   }
 }
