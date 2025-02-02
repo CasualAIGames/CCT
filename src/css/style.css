@@ -48,19 +48,18 @@ button {
 .auth-title {
   font-family: 'Pricedown', sans-serif;
   color: #FFD700;
+  text-shadow: 1px 1px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
 }
 
 .auth-title {
   font-size: 28px;
   text-align: center;
   margin-bottom: 15px;
-  text-shadow: 2px 2px 4px #000;
   letter-spacing: 2px;
 }
 
 .game-title.main-title {
   font-size: 22px;
-  color: #FFD700;
   text-align: center;
   line-height: 1.1;
   margin-bottom: 15px;
@@ -80,11 +79,9 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Fondo ligeramente más oscuro para el mapa */
-  background-color: #080808; /* Cambiado a un negro más suave */
-  /* Borde pixelado para el contenedor del mapa */
+  background-color: #080808;
   border: 2px solid #333;
-  box-shadow: 0 0 0 2px #333; /* Sombra interior para efecto pixelado */
+  box-shadow: 0 0 0 2px #333;
 }
 
 #map,
@@ -120,6 +117,18 @@ button {
 #sidebar.active {
   transform: translateX(0);
 }
+
+#sidebar.portrait.active {
+  transform: translateY(0);
+  top: auto;
+  bottom: 0;
+  max-height: calc(100vh - 70px);
+}
+
+#statsBanner.portrait + #sidebar.portrait.active {
+  transform: translateY(0);
+}
+
 
 .section,
 .player-card,
@@ -209,9 +218,9 @@ button {
 #statsBanner {
   background: linear-gradient(145deg, #2e2e2e, #252525);
   box-shadow: 4px 4px 8px #1d1d1d, -4px -4px 8px #333333;
-  padding: 5px 7px;
+  padding: 10px;
   position: fixed;
-  top: 7px;
+  top: 10px;
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
@@ -223,9 +232,11 @@ button {
   color: #ddd;
   pointer-events: none;
   font-family: monospace, monospace;
-  font-size: 0.7em;
+  font-size: 1em;
   width: 95%;
   max-width: 1200px;
+  display: flex;
+  justify-content: center;
 }
 
 #statsBanner.active {
@@ -240,18 +251,21 @@ button {
       width: 70%;
       max-width: 1000px;
   }
+  #statsBanner {
+      font-size: 1.1em;
+      padding: 12px 15px;
+  }
 }
 
 @media (min-width: 1200px) {
   #statsBanner {
-      font-size: 0.8em;
-      padding: 8px 10px;
-      font-size: 0.95em;
+      font-size: 1.2em;
+      padding: 15px 20px;
   }
 
   .banner-icon {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
   }
 }
 
@@ -262,7 +276,8 @@ button {
       transform: translate(-50%, 0);
       box-shadow: 0 2px 3px rgba(0, 0, 0, 0.25);
       border-radius: 0 0 8px 8px;
-      font-size: 1.5em;
+      font-size: 1.2em;
+      padding: 8px;
   }
 }
 
@@ -299,12 +314,12 @@ button {
   color: #ddd;
   font-family: 'Roboto', sans-serif;
   width: 100%;
-  padding: 4px 6px;
+  padding: 8px 10px;
   box-sizing: border-box;
   border-left: 1px solid #3a3a3a;
   height: 100%;
   justify-content: flex-start;
-  gap: 5px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -313,7 +328,7 @@ button {
 }
 
 .stat-item i {
-  font-size: 1.6em;
+  font-size: 1.8em;
   margin-bottom: 0;
   margin-right: 0;
   color: #bbb;
@@ -334,9 +349,9 @@ button {
 
 .stat-item span {
   font-family: 'Pricedown', sans-serif;
-  font-size: 0.9em;
+  font-size: 1.1em;
   color: #fff;
-  text-shadow: none;
+  text-shadow: 1px 1px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
   display: inline-block;
   width: auto;
   text-align: left;
@@ -352,60 +367,75 @@ button {
 .arrested-per-second-container {
   position: relative;
   transform: none;
-  font-size: 0.6em;
+  font-size: 0.7em;
   font-family: 'Pricedown', sans-serif;
   margin-top: 0;
   display: inline-block;
   width: auto;
   text-align: left;
-  margin-left: 60px;
+  margin-left: 70px;
   vertical-align: middle;
   flex-shrink: 0;
-  color: #99ff99;
 }
 
 .money-per-second-container {
-  color: #99ff99;
+  color: #00FF7F;
 }
 
 .esbirros-per-second-container {
-  color: #ff9999;
+  color: #FF4136;
 }
 
 .arrested-per-second-container {
-  color: #9999ff;
+  color: #2979FF;
 }
 
-#menu-toggle-button {
+#fixed-action-buttons {
   position: fixed;
-  width: 30px;
-  height: 30px;
+  display: flex;
+  gap: 10px;
+  z-index: 1500;
+}
+
+@media (min-width: 769px) {
+  #fixed-action-buttons {
+    bottom: 10px;
+    left: 10px;
+    flex-direction: row;
+    align-items: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  #fixed-action-buttons {
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+  }
+}
+
+
+#menu-toggle-button {
+  width: 40px;
+  height: 40px;
   background-color: #444;
   color: #fff;
   border: none;
   cursor: pointer;
-  z-index: 1500;
   box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
   transition: background-color 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 50%;
+  font-size: 1.2em;
 }
 
-@media (min-width: 769px) {
-  #menu-toggle-button {
-      top: 10px;
-      left: 10px;
-      border-radius: 50%;
-      font-size: 1.5em;
-  }
-}
 
 @media (max-width: 768px) {
   #menu-toggle-button {
-      top: 7px;
-      right: 10px;
-      border-radius: 6px;
+      border-radius: 8px;
   }
 }
 
@@ -716,6 +746,19 @@ body.sidebar-active #notificationContainer {
   color: #ccc;
 }
 
+.upgrade-details[data-type="money"] .effect .unit {
+  color: #00ff00;
+}
+
+.upgrade-details[data-type="esbirros"] .effect .unit {
+  color: #ff0000;
+}
+
+.upgrade-details[data-type="police"] .effect .unit {
+  color: #0000ff;
+}
+
+
 .upgrade-details .effect .green-value {
   color: #00ff00;
 }
@@ -747,6 +790,7 @@ body.sidebar-active #notificationContainer {
   max-width: 100%;
   box-sizing: border-box;
   text-align: center;
+  text-shadow: 1px 1px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
 }
 
 .upgrade-buy-button:hover {
@@ -913,6 +957,7 @@ body.sidebar-active #notificationContainer {
   text-align: center;
   margin-bottom: 12px;
   font-size: 1em;
+  text-shadow: 1px 1px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
 }
 
 .leader-list {
@@ -1047,13 +1092,14 @@ body.sidebar-active #notificationContainer {
   text-align: center;
   color: #FFD700;
   font-family: 'Pricedown', sans-serif;
+  text-shadow: 1px 1px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
 }
 
 #newsPopup.welcome-popup #popupNewsTitle {
   color: #4CAF50;
   font-size: 1.1em;
   font-weight: bold;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5), 1px 1px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
   letter-spacing: 1px;
 }
 
@@ -1141,60 +1187,84 @@ body.sidebar-active #notificationContainer {
 .player-card {
   background: linear-gradient(145deg, #2e2e2e, #252525);
   box-shadow: 4px 4px 8px #1d1d1d, -4px -4px 8px #333333;
-  border: 2px dashed #999;
-  padding: 10px;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
+  border: 1px solid #555;
+  padding: 8px;
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  grid-template-rows: auto auto auto auto;
+  grid-template-areas:
+    "image band"
+    "image leader"
+    "image country"
+    "image police";
   gap: 6px;
   position: relative;
 }
 
-.leader-card-info {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 6px;
-  padding-bottom: 10px;
-  border-bottom: 1px dashed #3a3a3a;
-}
-
-.leader-image {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
+.player-card .leader-image {
+  grid-area: image;
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
   object-fit: cover;
   border: 2px solid #444;
   box-shadow: 2px 2px 5px #111;
 }
 
-.band-info {
+.player-card .player-info {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 3px;
 }
 
-.band-info-item {
+.player-card .band-name {
+  grid-area: band;
+  font-size: 0.9em;
+  color: #eee;
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-card .leader-name {
+  grid-area: leader;
+  font-size: 0.8em;
+  color: #ddd;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-card .country {
+  grid-area: country;
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 0.8em;
-  color: #eee;
+  gap: 4px;
+  font-size: 0.7em;
+  color: #ccc;
 }
 
-.band-info-item i,
-.band-info-item img.country-icon,
-.band-info-item img.police-icon {
-  font-size: 0.9em;
-  color: #ddd;
-  width: 16px;
-  height: 16px;
+.player-card .country-icon {
+  width: 14px;
+  height: 14px;
 }
 
-.band-info-item img.country-icon,
-.band-info-item img.police-icon {
-  filter: brightness(1.2);
+.player-card .police {
+  grid-area: police;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7em;
+  color: #ccc;
 }
+
+.player-card .police-icon {
+  width: 14px;
+  height: 14px;
+}
+
 
 .money-actions {
   display: flex;
@@ -1205,8 +1275,8 @@ body.sidebar-active #notificationContainer {
   background-color: #4CAF50;
   color: white;
   font-family: 'Pricedown', sans-serif;
-  font-size: 0.8em;
-  padding: 6px 12px;
+  font-size: 0.9em;
+  padding: 10px 16px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -1215,6 +1285,7 @@ body.sidebar-active #notificationContainer {
   outline: none;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  text-shadow: 1px 1px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
 }
 
 #btnMoneyClick:hover {
@@ -1336,6 +1407,7 @@ body.sidebar-active #notificationContainer {
   font-size: 1em;
   margin-bottom: 5px;
   font-family: 'Pricedown', sans-serif;
+  text-shadow: 1px 1px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black;
 }
 
 #detail-stats p {
@@ -1374,7 +1446,6 @@ body.sidebar-active #notificationContainer {
   filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.5));
 }
 
-/* Media Queries para Responsive */
 @media (max-width: 768px) {
   #statsBanner {
       left: 50%;
@@ -1397,29 +1468,29 @@ body.sidebar-active #notificationContainer {
   .stat-item {
       margin: 0;
       font-size: 0.8em;
-      padding: 2px 3px;
+      padding: 4px 5px;
       flex-direction: column;
       align-items: center;
       text-align: center;
       justify-content: center;
-      gap: 2px;
+      gap: 4px;
   }
 
   .stat-item i {
-      font-size: 1em;
+      font-size: 1.2em;
       margin-bottom: 0;
       margin-right: 0;
   }
 
   .stat-item span {
-      font-size: 1em;
+      font-size: 1.1em;
       margin-right: 0;
   }
 
   .money-per-second-container,
   .esbirros-per-second-container,
   .arrested-per-second-container {
-      font-size: 0.6em;
+      font-size: 0.7em;
       margin-top: 2px;
       margin-left: 0;
       width: 100%;
@@ -1603,21 +1674,21 @@ body.sidebar-active .notification {
 }
 
 .leaflet-container {
-  font-family: 'Pricedown', sans-serif; 
-  color: #eee; 
+  font-family: 'Pricedown', sans-serif;
+  color: #eee;
   cursor: crosshair;
 }
 
 .leaflet-control-attribution {
-  display: none; 
+  display: none;
 }
 
 .leaflet-popup-content-wrapper {
-  background-color: #2a2a2a; 
+  background-color: #2a2a2a;
   color: #eee;
-  border: 2px solid #555; 
+  border: 2px solid #555;
   box-shadow: 2px 2px 0 #333;
-  border-radius: 0; 
+  border-radius: 0;
   padding: 10px;
 }
 
@@ -1628,14 +1699,14 @@ body.sidebar-active .notification {
 
 .leaflet-tooltip {
   z-index: 15001 !important;
-  background-color: rgba(40, 40, 40, 0.9); 
+  background-color: rgba(40, 40, 40, 0.9);
   color: #eee;
-  border: 2px solid #555; 
+  border: 2px solid #555;
   box-shadow: 2px 2px 0 #333;
   border-radius: 0;
-  padding: 6px 10px; 
+  padding: 6px 10px;
   font-size: 0.9em;
-  font-family: 'Pricedown', sans-serif; 
+  font-family: 'Pricedown', sans-serif;
 }
 
 .leaflet-tooltip-top:before,
@@ -1643,4 +1714,39 @@ body.sidebar-active .notification {
 .leaflet-tooltip-left:before,
 .leaflet-tooltip-right:before {
   border: none;
+}
+
+.tab-content-earth.active ~ #map-container {
+  display: flex;
+}
+
+.tab-content-upgrades.active ~ #map-container,
+.tab-content-abilities.active ~ #map-container {
+  display: none;
+}
+
+.money-particle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1000;
+  width: 30px;
+  height: 30px;
+  transform: translate(-50%, -50%);
+}
+
+.money-particle img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@keyframes money-particle-animation {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--rotate, 0deg)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(calc(var(--rotate, 0deg) + 360deg)) scale(0.5);
+  }
 }

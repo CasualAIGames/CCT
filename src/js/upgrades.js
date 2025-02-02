@@ -4,7 +4,7 @@ export const moneyUpgrades = [
     name: "Compraventa de chatarra",
     desc: "Coge eso que no usas y véndelo.",
     baseCost: 50,
-    effectMoneySec: 200000,
+    effectMoneySec: 25456215,
     rank: 1,
     times: 0,
     image: "assets/images/chatarra.png"

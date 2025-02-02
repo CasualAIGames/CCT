@@ -1,3 +1,4 @@
+// main.js:
 import {
   moneyUpgrades,
   esbirrosUpgrades,
@@ -17,6 +18,7 @@ import {
   login
 } from "./auth.js"
 import { database, ref, set, get } from "./firebase-config.js"
+import { generateMoneyParticles } from "./particles.js";
 
 const mapElement = document.getElementById("map")
 const notificationContainer = document.getElementById("notificationContainer")
@@ -77,6 +79,11 @@ const startCountrySelect = document.getElementById("register-start-country")
 const iconMoneyInfo = document.getElementById("iconMoneyInfo")
 const iconEsbirrosInfo = document.getElementById("iconEsbirrosInfo")
 const iconPoliceInfo = document.getElementById("iconPoliceInfo")
+const appContainer = document.getElementById("app-container")
+const tabContentEarth = document.getElementById("earth.pnh")
+const tabContentUpgrades = document.getElementById("upgrades")
+const tabContentAbilities = document.getElementById("abilities")
+
 
 const map = L.map(mapElement, { noWrap: true, minZoom: 2, maxZoom: 18 }).setView([40, -3], 5)
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{noWrap:true}).addTo(map)
@@ -408,9 +415,9 @@ function renderStats(){
     netEsb = (gameState.totalEsbirrosUpgrades * gameState.esbirrosPerTickMultiplier * (1 + gameState.esbirrosMultiplierPercentage)) - gameState.arrestedPerSecond
     netEsb = Math.max(0, netEsb)
   }
-  moneyPerSecondElement.innerText = `${formatNumber(gameState.moneyPerSecond)}/seg`
-  esbirrosPerSecondElement.innerText = `${formatNumber(netEsb)} esb/seg`
-  arrestedPerSecondElement.innerText = `${formatNumber(gameState.arrestedPerSecond)} det/seg`
+  moneyPerSecondElement.innerText = `${formatNumber(gameState.moneyPerSecond)}`
+  esbirrosPerSecondElement.innerText = `${formatNumber(netEsb)} `
+  arrestedPerSecondElement.innerText = `${formatNumber(gameState.arrestedPerSecond)}`
   playerStarsProgress.style.width = `${Math.min(Math.max((gameState.policeStars/5)*100,0),100)}%`
   playerStarsElements.forEach((s,i) => {
     s.style.opacity = i < gameState.policeStars ? 1 : 0
@@ -431,7 +438,6 @@ function updatePerSecondStats(){
   gameState.totalMoneyUpgradesSec = moneyUpgrades.reduce((acc,u) => acc + (u.effectMoneySec || 0)*u.times, 0)
   gameState.moneyPerSecond = Math.max(0, gameState.totalMoneyUpgradesSec)
   gameState.arrestedPerSecond = gameState.lastArrestIncrement / 5
-  // Añade la línea para que el icono de esbirros obtenga un valor > 0
   gameState.esbirrosPerSecond = (gameState.totalEsbirrosUpgrades * gameState.esbirrosPerTickMultiplier * (1 + gameState.esbirrosMultiplierPercentage))
 }
 function displayInitialMinion(iso){
@@ -518,6 +524,12 @@ function createUpgradeElement(u, c, canBuy, bFunc, type, locked, pRem){
   }
   const imgClass = `upgrade-image ${locked ? "upgrade-image-locked" : ""}`
   const iH = u.image ? `<img src="${u.image}" alt="${u.name}" class="${imgClass}">` : ""
+  const upgradeDetailsDiv = document.createElement('div');
+  upgradeDetailsDiv.classList.add('upgrade-details');
+  upgradeDetailsDiv.setAttribute('data-type', type);
+  upgradeDetailsDiv.innerHTML = `<p class="upgrade-description">${u.desc}</p>${effTxt}`;
+
+
   d.innerHTML = `${lockedOverlay}
 <h5 class="upgrade-title"><span class="name">${u.name}</span></h5>
 <div class="upgrade-row">
@@ -526,8 +538,6 @@ ${iH}
 ${(!locked && u.times>0) ? `<span class="upgrade-times-overlay">x${u.times}</span>` : ""}
 </div>
 <div class="upgrade-info-container">
-<p class="upgrade-description">${u.desc}</p>
-${effTxt}
 </div>
 <div class="upgrade-buy-container">
 <button class="upgrade-buy-button ${!canBuy ? "upgrade-buy-unavailable" : ""} ${locked ? "upgrade-buy-locked" : ""}">
@@ -535,6 +545,7 @@ ${locked ? "BLOQUEADO" : `BUY ${formatNumber(c)}$`}
 </button>
 </div>
 </div>`
+  d.querySelector('.upgrade-info-container').appendChild(upgradeDetailsDiv);
   const bB = d.querySelector(".upgrade-buy-button")
   bB.addEventListener("click", e => {
     e.stopPropagation()
@@ -846,17 +857,32 @@ function triggerHideoutRaid(countries, intensity) {
   addNotification(`Redada policial en ${st.countryName}. Esbirros perdidos.`, "hideoutRaid", st.countryName)
   renderWorldList()
 }
+
+// <-- Lógica de velocidad de clic y partículas -->
+let clickTimes = []  // Cambiado a let para poder reasignarlo
 btnMoneyClickElement.addEventListener("click", async e => {
-  if(!gameState.gameActive) return
-  const earn = (gameState.baseMoneyClick + gameState.totalMoneyUpgrades) * (1 + gameState.clickMultiplierPercentage)
-  gameState.playerMoney += earn
-  createAnimation(bannerMoneyElement, earn, "money")
-  renderStats()
-  renderUpgrades()
-  e.target.classList.add("clicked")
-  setTimeout(() => e.target.classList.remove("clicked"), 200)
-  await saveGame()
-})
+  if(!gameState.gameActive) return;
+  const earn = (gameState.baseMoneyClick + gameState.totalMoneyUpgrades) * (1 + gameState.clickMultiplierPercentage);
+  gameState.playerMoney += earn;
+  createAnimation(bannerMoneyElement, earn, "money");
+  renderStats();
+  renderUpgrades();
+  e.target.classList.add("clicked");
+  setTimeout(() => e.target.classList.remove("clicked"), 200);
+  await saveGame();
+
+  const currentTime = Date.now();
+  clickTimes.push(currentTime);
+
+  // Mantén solo los clics del último segundo
+  clickTimes = clickTimes.filter(time => currentTime - time < 1000);
+
+  let clickSpeed = clickTimes.length; // Clics por segundo (aproximado)
+
+  generateMoneyParticles(clickSpeed, btnMoneyClickElement); // Llama a la función de partículas
+});
+// <-- Fin lógica de velocidad de clic y partículas -->
+
 function onCountryClick(e){
   showCountryDetail(e.target.feature.id)
 }
@@ -1139,9 +1165,8 @@ function spawnIcon(iconType, icon, iso){
               if (currentEsbirros >= maxEsbirros) {
                 return;
               }
-              // eG depende de esbirrosPerSecond que antes siempre era 0:
-              let eG = Math.floor(gameState.esbirrosPerSecond * 100) // MODIFICADO A * 100 PARA DAR X100
-              let canAdd = Math.max(0, maxEsbirros - currentEsbirros); // DEFINICIÓN DE canAdd
+              let eG = Math.floor(gameState.esbirrosPerSecond * 100)
+              let canAdd = Math.max(0, maxEsbirros - currentEsbirros);
               if(eG > canAdd) eG = canAdd
               if(eG > 0){
                 st.esbirros = currentEsbirros + eG
@@ -1160,7 +1185,7 @@ function spawnIcon(iconType, icon, iso){
               createCenterPopupAnimation("-1 Estrella", "police")
               renderStats()
               saveGame()
-              generatePoliceNews({bandName:gameState.bandName,leaderName:gameState.leaderName}, gameState.countryStatus[iso]?.countryName||iso)
+              generatePoliceNews({bandName: gameState.bandName,leaderName: gameState.leaderName}, gameState.countryStatus[iso]?.countryName||iso)
               .then(n => showNewsPopup(n, "¡Relajación Policial!"))
             }
           }
@@ -1196,7 +1221,7 @@ function spawnRandomIcons(){
       lastEsbirrosSpawn = now
     }
   }
-  if(gameState.policeStars>0 && now - lastPoliceSpawn >= POLICE_ICON_SPAWN_INTERVAL && policeIconsEnabled && cIso.length){
+  if(gameState.policeStars>0 && now - lastPoliceSpawn >= POLICE_ICON_SPAWN_INTERVAL && cIso.length){
     const rP = cIso[Math.floor(Math.random()*cIso.length)]
     const st = gameState.countryStatus[rP]
     if(!st || (st.arrestedTotal||0) <= (st.esbirros||0)){
@@ -1348,6 +1373,13 @@ tabButtons.forEach(btn => {
     btn.classList.add("active")
     if(tId === "world") renderWorldList()
     renderUpgrades()
+    appContainer.className = '';
+    tabContents.forEach(tabContent => {
+        if (tabContent.classList.contains('active')) {
+            appContainer.classList.add(`tab-content-${tabContent.id.split('.')[0]}-active`);
+        }
+    });
+
   })
 })
 gameTitles.forEach(tl => {

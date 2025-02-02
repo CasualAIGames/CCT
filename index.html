@@ -5,7 +5,7 @@
   <title>Click & Conquer Tycoon</title>
   <meta name="description" content="Click & Conquer Tycoon: Domina el mundo paso a paso en este adictivo juego de estrategia incremental. Crea tu banda, expande tu imperio y conviértete en el magnate definitivo.">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
@@ -13,7 +13,6 @@
 
   <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <link rel="preload" href="assets/images/iconodinero.png" as="image">
 </head>
 <body>
   <div id="app-container">
@@ -21,40 +20,24 @@
     <div id="sidebar">
       <h2 class="game-title main-title">Click & Conquer Tycoon</h2>
       <div class="player-card">
-        <div class="leader-card-info">
-          <img id="leaderImage" src="" alt="Imagen del Líder" class="leader-image">
-          <div class="band-info">
-            <span class="band-info-item">
-              <i class="fas fa-users"></i>
-              <span id="bandInfoBand"></span>
-            </span>
-            <span class="band-info-item">
-              <i class="fas fa-user"></i>
-              <span id="bandInfoLeader"></span>
-            </span>
-            <span class="band-info-item">
-              <img src="assets/images/earth.png" alt="Icono de Mapamundi" class="country-icon">
-              <span id="bandInfoCountry"></span>
-            </span>
-
-            <span class="band-info-item police-container">
-              <img src="assets/images/policia.png" alt="Icono de Policía" class="police-icon">
-              <span id="playerStars" class="stars">
-                <span class="progress-bar">
-                  <span class="progress"></span>
-                </span>
-                <span class="star"></span>
-                <span class="star"></span>
-                <span class="star"></span>
-                <span class="star"></span>
-                <span class="star"></span>
+        <img id="leaderImage" src="" alt="Imagen del Líder" class="leader-image">
+        <div class="player-info">
+          <div class="band-name"><span id="bandInfoBand"></span></div>
+          <div class="leader-name"><span id="bandInfoLeader"></span></div>
+          <div class="country"><img src="assets/images/earth.png" alt="Icono de Mapamundi" class="country-icon"><span id="bandInfoCountry"></span></div>
+          <div class="police">
+            <img src="assets/images/policia.png" alt="Icono de Policía" class="police-icon">
+            <span id="playerStars" class="stars">
+              <span class="progress-bar">
+                <span class="progress"></span>
               </span>
+              <span class="star"></span>
+              <span class="star"></span>
+              <span class="star"></span>
+              <span class="star"></span>
+              <span class="star"></span>
             </span>
           </div>
-        </div>
-
-        <div class="money-actions">
-          <button class="btn" id="btnMoneyClick">Generar Dinero</button>
         </div>
       </div>
 
@@ -147,7 +130,7 @@
             <img src="assets/images/dinero.png" alt="Icono de Dinero" class="banner-icon">
             <span id="bannerMoney">100</span>
             <div class="money-per-second-container">
-              +<span id="moneyPerSecond">0</span> 
+              +<span id="moneyPerSecond">0</span> $/seg
             </div>
           </div>
 
@@ -155,7 +138,7 @@
             <img src="assets/images/esbirro.png" alt="Icono de Esbirros" class="banner-icon">
             <span id="bannerEsbirros">0</span>
             <div class="esbirros-per-second-container">
-              +<span id="esbirrosPerSecond">0</span> 
+              +<span id="esbirrosPerSecond">0</span> esb/seg
             </div>
           </div>
 
@@ -163,17 +146,20 @@
             <img src="assets/images/policia.png" alt="Icono de Detenidos" class="banner-icon">
             <span id="bannerArrested">0</span>
             <div class="arrested-per-second-container">
-              +<span id="arrestedPerSecond">0</span> 
+              +<span id="arrestedPerSecond">0</span> det/seg
             </div>
           </div>
         </div>
-        <div class="banner-actions"></div>
       </div>
     </div>
 
-    <button id="menu-toggle-button" class="menu-toggle-button">
-      <i class="fas fa-chevron-left"></i>
-    </button>
+    <div id="fixed-action-buttons">
+      <button id="menu-toggle-button" class="menu-toggle-button">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <button class="btn" id="btnMoneyClick">Generar Dinero</button>
+    </div>
+
 
     <div id="auth-container">
       <div class="auth-form" id="login-form-container">
@@ -266,6 +252,7 @@
     </div>
     <div id="newsOverlay" class="overlay hidden"></div>
     <script src="src/js/main.js" type="module"></script>
+    <script src="src/js/particles.js" type="module"></script>
   </div>
 </body>
 </html>
