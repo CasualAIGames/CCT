@@ -32,7 +32,6 @@ const bannerEsbirrosElement = document.getElementById("bannerEsbirros")
 const moneyPerSecondElement = document.getElementById("moneyPerSecond")
 const esbirrosPerSecondElement = document.getElementById("esbirrosPerSecond")
 const arrestedPerSecondElement = document.getElementById("arrestedPerSecond")
-const playerStarsProgress = document.querySelector("#playerStars .progress")
 const playerStarsElements = document.querySelectorAll("#playerStars .star")
 const bandInfoBandElement = document.getElementById("bandInfoBand")
 const bandInfoLeaderElement = document.getElementById("bandInfoLeader")
@@ -83,7 +82,6 @@ const appContainer = document.getElementById("app-container")
 const tabContentEarth = document.getElementById("earth.pnh")
 const tabContentUpgrades = document.getElementById("upgrades")
 const tabContentAbilities = document.getElementById("abilities")
-
 
 const map = L.map(mapElement, { noWrap: true, minZoom: 2, maxZoom: 18 }).setView([40, -3], 5)
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{noWrap:true}).addTo(map)
@@ -418,7 +416,6 @@ function renderStats(){
   moneyPerSecondElement.innerText = `${formatNumber(gameState.moneyPerSecond)}`
   esbirrosPerSecondElement.innerText = `${formatNumber(netEsb)} `
   arrestedPerSecondElement.innerText = `${formatNumber(gameState.arrestedPerSecond)}`
-  playerStarsProgress.style.width = `${Math.min(Math.max((gameState.policeStars/5)*100,0),100)}%`
   playerStarsElements.forEach((s,i) => {
     s.style.opacity = i < gameState.policeStars ? 1 : 0
   })
@@ -528,7 +525,6 @@ function createUpgradeElement(u, c, canBuy, bFunc, type, locked, pRem){
   upgradeDetailsDiv.classList.add('upgrade-details');
   upgradeDetailsDiv.setAttribute('data-type', type);
   upgradeDetailsDiv.innerHTML = `<p class="upgrade-description">${u.desc}</p>${effTxt}`;
-
 
   d.innerHTML = `${lockedOverlay}
 <h5 class="upgrade-title"><span class="name">${u.name}</span></h5>
@@ -708,17 +704,22 @@ function applyWeaponEffect(u){
     gameState.esbirrosPerTickMultiplier *= u.effect
   }
 }
-function increaseStarsWithResistance(base, rank = 1){
-  const effective = Math.max(0, base - (base * gameState.policeResistance))
-  let starIncrease = 0
-  if (effective >= 10) starIncrease = 2
-  else if (effective >= 5) starIncrease = 1
-  else starIncrease = 0
-  if (rank >= 3 && starIncrease > 0) starIncrease += 1
-  if (rank >= 5 && starIncrease > 0) starIncrease += 1
-  const newStars = gameState.policeStars + starIncrease
-  recalcPoliceStarsFromValue(newStars)
+// ---------- FUNCION MODIFICADA: increaseStarsWithResistance ----------
+function increaseStarsWithResistance(base, rank = 1) {
+  const effective = base * Math.max(0.1, (1 - gameState.policeResistance));
+  const controlledCount = Object.values(gameState.countryStatus).filter(st => st.control >= 50).length;
+  const totalCount = Object.keys(gameState.countryStatus).length || 1;
+  const dominanceFactor = controlledCount / totalCount;
+  const adjustedEffective = effective * dominanceFactor;
+  let starIncrease = 1;
+  if (adjustedEffective >= 10) starIncrease = 3;
+  else if (adjustedEffective >= 5) starIncrease = 2;
+  if (rank >= 3 && starIncrease > 0) starIncrease += 1;
+  if (rank >= 5 && starIncrease > 0) starIncrease += 1;
+  const newStars = gameState.policeStars + starIncrease;
+  recalcPoliceStarsFromValue(newStars);
 }
+// -----------------------------------------------------------------------
 function startReconquestEvent(countryIso){
   if(gameState.reconquestEvent) return
   const st = gameState.countryStatus[countryIso]
@@ -792,7 +793,7 @@ function attemptRescueMinions(countryIso) {
 function triggerPoliceActions(){
   if (!gameState.gameActive || !countriesData || Date.now() - gameState.lastPoliceEventCheck < 5000) return
   gameState.lastPoliceEventCheck = Date.now()
-  const baseEventProbability = gameState.policeStars * 0.05
+  const baseEventProbability = gameState.policeStars * 0.1
   if(gameState.policeStars>=1){
     if(Math.random() < baseEventProbability){
       const controlledCountries = Object.keys(gameState.countryStatus).filter(i => gameState.countryStatus[i].control > 0)
@@ -802,10 +803,10 @@ function triggerPoliceActions(){
     }
   }
   if(gameState.policeStars>=3){
-    if(Math.random() < baseEventProbability*0.5){
+    if(Math.random() < baseEventProbability * 0.7){
       triggerEconomicBlockade(1)
     }
-    if(Math.random() < baseEventProbability*0.4){
+    if(Math.random() < baseEventProbability * 0.6){
       const dominatedCountries = Object.keys(gameState.countryStatus).filter(i => gameState.countryStatus[i].dominated)
       if(dominatedCountries.length){
         triggerHideoutRaid(dominatedCountries, 1)
@@ -830,20 +831,20 @@ function triggerLocalPoliceControl(countries, intensity) {
   const eventType = Math.random()
   let notification = ""
   if (eventType < 0.33) {
-    st.esbirros = Math.max(0, (st.esbirros || 0) - Math.floor(5 * intensity))
+    st.esbirros = Math.max(0, (st.esbirros || 0) - Math.floor(7 * intensity))
     notification = `Reducen la actividad de esbirros en ${st.countryName}`
   } else if (eventType < 0.66) {
-    st.control = Math.max(0, st.control - Math.floor(10 * intensity))
+    st.control = Math.max(0, st.control - Math.floor(15 * intensity))
     notification = `Dificultan la expansión en ${st.countryName}`
   } else {
-    recalcPoliceStarsFromValue(gameState.policeStars + 1)
+    recalcPoliceStarsFromValue(gameState.policeStars + 2)
     notification = `Aumenta la Tensión en ${st.countryName}`
   }
   addNotification(`Controles Policiales. ${notification}`, "policeControl", st.countryName)
   renderWorldList()
 }
 function triggerEconomicBlockade(intensity) {
-  const moneyReduction = gameState.playerMoney * (0.05 * intensity)
+  const moneyReduction = gameState.playerMoney * (0.1 * intensity)
   gameState.playerMoney = Math.max(0, gameState.playerMoney - moneyReduction)
   addNotification("La policía intensifica el control financiero. Fondos reducidos.", "economicBlockade")
   renderStats()
@@ -852,14 +853,14 @@ function triggerHideoutRaid(countries, intensity) {
   const countryIso = countries[Math.floor(Math.random() * countries.length)]
   const st = gameState.countryStatus[countryIso]
   if (!st) return
-  const esbirrosLost = Math.floor(Math.max(1, (st.esbirros || 0) * (0.1 * intensity)))
+  const esbirrosLost = Math.floor(Math.max(1, (st.esbirros || 0) * (0.15 * intensity)))
   st.esbirros = Math.max(0, (st.esbirros || 0) - esbirrosLost)
   addNotification(`Redada policial en ${st.countryName}. Esbirros perdidos.`, "hideoutRaid", st.countryName)
   renderWorldList()
 }
 
 // <-- Lógica de velocidad de clic y partículas -->
-let clickTimes = []  // Cambiado a let para poder reasignarlo
+let clickTimes = []
 btnMoneyClickElement.addEventListener("click", async e => {
   if(!gameState.gameActive) return;
   const earn = (gameState.baseMoneyClick + gameState.totalMoneyUpgrades) * (1 + gameState.clickMultiplierPercentage);
@@ -874,12 +875,11 @@ btnMoneyClickElement.addEventListener("click", async e => {
   const currentTime = Date.now();
   clickTimes.push(currentTime);
 
-  // Mantén solo los clics del último segundo
   clickTimes = clickTimes.filter(time => currentTime - time < 1000);
 
-  let clickSpeed = clickTimes.length; // Clics por segundo (aproximado)
+  let clickSpeed = clickTimes.length;
 
-  generateMoneyParticles(clickSpeed, btnMoneyClickElement); // Llama a la función de partículas
+  generateMoneyParticles(clickSpeed, btnMoneyClickElement);
 });
 // <-- Fin lógica de velocidad de clic y partículas -->
 
@@ -962,8 +962,11 @@ function loadGame(uid){
     startGame()
     if(gameState.firstSession && gameState.startCountry){
       displayInitialMinion(gameState.startCountry)
-    }
-    if(iconsEnabled){
+    } else {
+      iconsEnabled = true;
+      moneyIconsEnabled = true;
+      esbirrosIconsEnabled = true;
+      policeIconsEnabled = true;
       iconMoneyInfo.classList.remove("hidden")
       iconEsbirrosInfo.classList.remove("hidden")
       iconPoliceInfo.classList.remove("hidden")
@@ -1159,6 +1162,11 @@ function spawnIcon(iconType, icon, iso){
           } else if(iconType==="esbirros"){
             const st = gameState.countryStatus[iso]
             if(st){
+              if(st.control === 100){
+                map.removeLayer(mk)
+                activeIcons = activeIcons.filter(m => m!==mk)
+                return
+              }
               let maxEsbirros = st.popReal - st.arrestedTotal
               if (maxEsbirros < 0) maxEsbirros = 0
               let currentEsbirros = st.esbirros || 0;
@@ -1211,7 +1219,8 @@ function spawnRandomIcons(){
     lastMoneySpawn = now
   }
   const dominated = cIso.filter(i => {
-    return gameState.countryStatus[i].dominated && esbirrosIconsEnabled && (gameState.countryStatus[i].esbirros||0) > (gameState.countryStatus[i].arrestedTotal||0)
+    const cs = gameState.countryStatus[i]
+    return cs.dominated && cs.control < 100 && esbirrosIconsEnabled && ((cs.esbirros||0) > (cs.arrestedTotal||0))
   })
   if(now - lastEsbirrosSpawn >= ESBIRROS_ICON_SPAWN_INTERVAL && esbirrosIconsEnabled){
     const countriesWithEsbirros = dominated.filter(iso => gameState.countryStatus[iso].esbirros > 0)
