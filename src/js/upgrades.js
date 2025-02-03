@@ -7,7 +7,7 @@ export const moneyUpgrades = [
     effectMoneySec: 25456215,
     rank: 1,
     times: 0,
-    image: "assets/images/chatarra.png"
+    image: "assets/images/chatarra.webp"
   },
   {
     id: "u-abuelas-dinero",
@@ -17,7 +17,7 @@ export const moneyUpgrades = [
     effectMoneySec: 6,
     rank: 2,
     times: 0,
-    image: "assets/images/bolso.png"
+    image: "assets/images/bolso.webp"
   },
   {
     id: "u-prestar-dinero",
@@ -27,7 +27,7 @@ export const moneyUpgrades = [
     effectMoneySec: 20,
     rank: 3,
     times: 0,
-    image: "assets/images/money-prestar-dinero.png"
+    image: "assets/images/money-prestar-dinero.webp"
   },
   {
     id: "u-estafa-cripto",
@@ -37,7 +37,7 @@ export const moneyUpgrades = [
     effectMoneySec: 60,
     rank: 4,
     times: 0,
-    image: "assets/images/criptomoneda.png"
+    image: "assets/images/criptomoneda.webp"
   },
   {
     id: "u-punto-de-droga",
@@ -47,7 +47,7 @@ export const moneyUpgrades = [
     effectMoneySec: 200,
     rank: 5,
     times: 0,
-    image: "assets/images/puntodroga.png"
+    image: "assets/images/puntodroga.webp"
   },
   {
     id: "u-coches-robados",
@@ -57,7 +57,7 @@ export const moneyUpgrades = [
     effectMoneySec: 400,
     rank: 6,
     times: 0,
-    image: "assets/images/cocherobado.png"
+    image: "assets/images/cocherobado.webp"
   },
   {
     id: "u-lavado-dinero",
@@ -67,7 +67,7 @@ export const moneyUpgrades = [
     effectMoneySec: 900,
     rank: 7,
     times: 0,
-    image: "assets/images/money-lavado-dinero.png"
+    image: "assets/images/money-lavado-dinero.webp"
   },
   {
     id: "u-centralita-llamadas",
@@ -77,7 +77,7 @@ export const moneyUpgrades = [
     effectMoneySec: 2700,
     rank: 8,
     times: 0,
-    image: "assets/images/centralitatlf.png"
+    image: "assets/images/centralitatlf.webp"
   },
   {
     id: "u-banco-clandestino",
@@ -87,7 +87,7 @@ export const moneyUpgrades = [
     effectMoneySec: 8000,
     rank: 9,
     times: 0,
-    image: "assets/images/bancoclan.png"
+    image: "assets/images/bancoclan.webp"
   },
   {
     id: "u-empresa-financiera",
@@ -97,7 +97,7 @@ export const moneyUpgrades = [
     effectMoneySec: 24000,
     rank: 10,
     times: 0,
-    image: "assets/images/empresafin.png"
+    image: "assets/images/empresafin.webp"
   }
 ]
 
@@ -110,7 +110,7 @@ export const esbirrosUpgrades = [
     effectEsb: 1,
     rank: 1,
     times: 0,
-    image: "assets/images/esbirros-boca-a-boca.png"
+    image: "assets/images/esbirros-boca-a-boca.webp"
   },
   {
     id: "u-recluta-bares",
@@ -120,7 +120,7 @@ export const esbirrosUpgrades = [
     effectEsb: 3,
     rank: 2,
     times: 0,
-    image: "assets/images/esbirros-reclutamiento-bares.png"
+    image: "assets/images/esbirros-reclutamiento-bares.webp"
   },
   {
     id: "u-pandilla-calle",
@@ -130,7 +130,7 @@ export const esbirrosUpgrades = [
     effectEsb: 10,
     rank: 3,
     times: 0,
-    image: "assets/images/esbirros-pandilla-calle.png"
+    image: "assets/images/esbirros-pandilla-calle.webp"
   },
   {
     id: "u-campamento-basico",
@@ -140,7 +140,7 @@ export const esbirrosUpgrades = [
     effectEsb: 30,
     rank: 4,
     times: 0,
-    image: "assets/images/esbirros-campamento-basico.png"
+    image: "assets/images/esbirros-campamento-basico.webp"
   },
   {
     id: "u-conexiones-prisiones",
@@ -150,7 +150,7 @@ export const esbirrosUpgrades = [
     effectEsb: 120,
     rank: 5,
     times: 0,
-    image: "assets/images/esbirros-conexiones-prisiones.png"
+    image: "assets/images/esbirros-conexiones-prisiones.webp"
   },
   {
     id: "u-alianza-mafias",
@@ -160,7 +160,7 @@ export const esbirrosUpgrades = [
     effectEsb: 400,
     rank: 6,
     times: 0,
-    image: "assets/images/esbirros-alianza-mafias.png"
+    image: "assets/images/esbirros-alianza-mafias.webp"
   },
   {
     id: "u-gimnasio-barrio",
@@ -170,7 +170,7 @@ export const esbirrosUpgrades = [
     effectEsb: 1500,
     rank: 7,
     times: 0,
-    image: "assets/images/esbirros-gimnasio-barrio.png"
+    image: "assets/images/esbirros-gimnasio-barrio.webp"
   },
   {
     id: "u-laboratorio-biologico",
@@ -180,7 +180,7 @@ export const esbirrosUpgrades = [
     effectEsb: 5000,
     rank: 8,
     times: 0,
-    image: "assets/images/esbirros-laboratorio-biologico.png"
+    image: "assets/images/esbirros-laboratorio-biologico.webp"
   },
   {
     id: "u-paramilitares",
@@ -190,7 +190,7 @@ export const esbirrosUpgrades = [
     effectEsb: 20000,
     rank: 9,
     times: 0,
-    image: "assets/images/esbirros-paramilitares.png"
+    image: "assets/images/esbirros-paramilitares.webp"
   },
   {
     id: "u-estado-paralelo",
@@ -200,7 +200,7 @@ export const esbirrosUpgrades = [
     effectEsb: 70000,
     rank: 10,
     times: 0,
-    image: "assets/images/esbirros-estado-paralelo.png"
+    image: "assets/images/esbirros-estado-paralelo.webp"
   }
 ]
 
@@ -214,7 +214,7 @@ export const policeUpgrades = [
     rank: 1,
     times: 0,
     type: "police",
-    image: "assets/images/police-sobornos-menores.png"
+    image: "assets/images/police-sobornos-menores.webp"
   },
   {
     id: "police-boost-2",
@@ -226,7 +226,7 @@ export const policeUpgrades = [
     rank: 2,
     times: 0,
     type: "police",
-    image: "assets/images/police-influencia-judicial.png"
+    image: "assets/images/police-influencia-judicial.webp"
   },
   {
     id: "police-boost-3",
@@ -237,7 +237,7 @@ export const policeUpgrades = [
     rank: 3,
     times: 0,
     type: "police",
-    image: "assets/images/police-desinformacion.png"
+    image: "assets/images/police-desinformacion.webp"
   },
   {
     id: "police-boost-4",
@@ -248,7 +248,7 @@ export const policeUpgrades = [
     rank: 4,
     times: 0,
     type: "police",
-    image: "assets/images/police-infiltracion.png"
+    image: "assets/images/police-infiltracion.webp"
   },
   {
     id: "police-boost-5",
@@ -260,7 +260,7 @@ export const policeUpgrades = [
     rank: 5,
     times: 0,
     type: "police",
-    image: "assets/images/police-pacto-comisarios.png"
+    image: "assets/images/police-pacto-comisarios.webp"
   },
   {
     id: "police-boost-6",
@@ -271,7 +271,7 @@ export const policeUpgrades = [
     rank: 6,
     times: 0,
     type: "police",
-    image: "assets/images/police-manipulacion-pruebas.png"
+    image: "assets/images/police-manipulacion-pruebas.webp"
   }
 ]
 
@@ -285,7 +285,7 @@ export const weaponsUpgrades = [
     rank: 1,
     times: 0,
     type: "economic",
-    image: "assets/images/economic-marketing-viral.png"
+    image: "assets/images/economic-marketing-viral.webp"
   },
   {
     id: "economic-boost-2",
@@ -296,7 +296,7 @@ export const weaponsUpgrades = [
     rank: 2,
     times: 0,
     type: "economic",
-    image: "assets/images/economic-persuasion.png"
+    image: "assets/images/economic-persuasion.webp"
   },
   {
     id: "economic-boost-3",
@@ -307,7 +307,7 @@ export const weaponsUpgrades = [
     rank: 3,
     times: 0,
     type: "economic",
-    image: "assets/images/economic-ingenieria-social.png"
+    image: "assets/images/economic-ingenieria-social.webp"
   },
   {
     id: "economic-boost-4",
@@ -318,7 +318,7 @@ export const weaponsUpgrades = [
     rank: 4,
     times: 0,
     type: "economic",
-    image: "assets/images/economic-publicidad-subliminal.png"
+    image: "assets/images/economic-publicidad-subliminal.webp"
   },
   {
     id: "economic-boost-5",
@@ -329,7 +329,7 @@ export const weaponsUpgrades = [
     rank: 5,
     times: 0,
     type: "economic",
-    image: "assets/images/economic-monopolio.png"
+    image: "assets/images/economic-monopolio.webp"
   },
   {
     id: "military-boost-1",
@@ -340,7 +340,7 @@ export const weaponsUpgrades = [
     rank: 1,
     times: 0,
     type: "military",
-    image: "assets/images/weapons-armas-caseras.png"
+    image: "assets/images/weapons-armas-caseras.webp"
   },
   {
     id: "military-boost-2",
@@ -351,7 +351,7 @@ export const weaponsUpgrades = [
     rank: 2,
     times: 0,
     type: "military",
-    image: "assets/images/weapons-soldados-mercenarios.png"
+    image: "assets/images/weapons-soldados-mercenarios.webp"
   },
   {
     id: "military-boost-3",
@@ -362,7 +362,7 @@ export const weaponsUpgrades = [
     rank: 3,
     times: 0,
     type: "military",
-    image: "assets/images/weapons-tecnologia-avanzada.png"
+    image: "assets/images/weapons-tecnologia-avanzada.webp"
   },
   {
     id: "military-boost-4",
@@ -373,7 +373,7 @@ export const weaponsUpgrades = [
     rank: 4,
     times: 0,
     type: "military",
-    image: "assets/images/weapons-entrenamiento-elite.png"
+    image: "assets/images/weapons-entrenamiento-elite.webp"
   },
   {
     id: "military-boost-5",
@@ -384,7 +384,7 @@ export const weaponsUpgrades = [
     rank: 5,
     times: 0,
     type: "military",
-    image: "assets/images/weapons-armamento-definitivo.png"
+    image: "assets/images/weapons-armamento-definitivo.webp"
   },
   {
     id: "military-boost-6",
@@ -395,7 +395,7 @@ export const weaponsUpgrades = [
     rank: 6,
     times: 0,
     type: "military",
-    image: "assets/images/weapons-rescate-aliados.png"
+    image: "assets/images/weapons-rescate-aliados.webp"
   },
   {
     id: "social-boost-1",
@@ -406,7 +406,7 @@ export const weaponsUpgrades = [
     rank: 1,
     times: 0,
     type: "social",
-    image: "assets/images/social-relaciones-publicas.png"
+    image: "assets/images/social-relaciones-publicas.webp"
   },
   {
     id: "social-boost-2",
@@ -417,7 +417,7 @@ export const weaponsUpgrades = [
     rank: 2,
     times: 0,
     type: "social",
-    image: "assets/images/social-eventos-beneficos.png"
+    image: "assets/images/social-eventos-beneficos.webp"
   },
   {
     id: "heat_management-boost-1",
@@ -428,7 +428,7 @@ export const weaponsUpgrades = [
     rank: 1,
     times: 0,
     type: "heat_management",
-    image: "assets/images/heat_management-conductores-huida.png"
+    image: "assets/images/heat_management-conductores-huida.webp"
   },
   {
     id: "heat_management-boost-2",
@@ -439,6 +439,6 @@ export const weaponsUpgrades = [
     rank: 2,
     times: 0,
     type: "heat_management",
-    image: "assets/images/heat_management-red-confidentes.png"
+    image: "assets/images/heat_management-red-confidentes.webp"
   }
 ]

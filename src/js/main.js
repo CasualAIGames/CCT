@@ -164,10 +164,10 @@ const defaultGameState = {
 }
 let gameState = { ...defaultGameState }
 
-const moneyIcon = L.icon({ iconUrl: "assets/images/iconodinero.png", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] })
-const esbirrosIcon = L.icon({ iconUrl: "assets/images/iconoesbirro.png", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] })
-const policeIcon = L.icon({ iconUrl: "assets/images/iconopolicia.png", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] })
-const welcomeIcon = L.icon({ iconUrl: "assets/images/iconoinfo.png", iconSize: [64,64], iconAnchor: [32,64], className: "esbirro-marker" })
+const moneyIcon = L.icon({ iconUrl: "assets/images/iconodinero.webp", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] })
+const esbirrosIcon = L.icon({ iconUrl: "assets/images/iconoesbirro.webp", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] })
+const policeIcon = L.icon({ iconUrl: "assets/images/iconopolicia.webp", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] })
+const welcomeIcon = L.icon({ iconUrl: "assets/images/iconoinfo.webp", iconSize: [64,64], iconAnchor: [32,64], className: "esbirro-marker" })
 
 function formatNumber(num) {
   if(isNaN(num)) return "NaN"
@@ -429,7 +429,7 @@ function renderStats(){
   bandInfoBandElement.textContent = gameState.bandName
   bandInfoLeaderElement.textContent = gameState.leaderName
   bandInfoCountryElement.textContent = gameState.startCountry
-  leaderImgElement.src = gameState.leaderImage || "images/placeholder.png"
+  leaderImgElement.src = gameState.leaderImage || "images/placeholder.webp"
   statsBanner.classList.toggle("active", !statsBanner.classList.contains("hidden"))
   statsBanner.classList.add("subtle-banner")
   updateHeatUI()

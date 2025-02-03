@@ -11,7 +11,7 @@ export function generateMoneyParticles(clickSpeed, buttonElement) {
       particle.classList.add('money-particle');
   
       const img = document.createElement('img');
-      img.src = 'assets/images/dinero.png'; // Ajusta la ruta si es necesario
+      img.src = 'assets/images/dinero.webp'; // Ajusta la ruta si es necesario
       img.alt = 'Dinero';
       particle.appendChild(img);
   
