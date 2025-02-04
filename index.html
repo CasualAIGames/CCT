@@ -1,4 +1,3 @@
-<!-- index.html (sin cambios) -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -8,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer-when-downgrade" />
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="src/css/style.css">
 
@@ -26,7 +25,7 @@
           <div class="band-name"><span id="bandInfoBand"></span></div>
           <div class="leader-name"><span id="bandInfoLeader"></span></div>
           <div class="country"><img src="assets/images/earth.webp" alt="Icono de Mapamundi" class="country-icon"><span id="bandInfoCountry"></span></div>
-          <div class="police">
+          <div id="playerStars" class="police">
             <img src="assets/images/policia.webp" alt="Icono de Policía" class="police-icon">
               <span class="star"></span>
               <span class="star"></span>
@@ -40,57 +39,60 @@
 
       <div class="tab-buttons">
         <button class="tab-button active" data-tab="upgrades">
-          <img src="assets/images/inversiones.webp" alt="Icono de Inversiones" class="tab-icon">
-        </button>
-        <button class="tab-button" data-tab="abilities">
           <img src="assets/images/mejoras.webp" alt="Icono de Mejoras" class="tab-icon">
+          <span>Mejoras</span>
         </button>
-        <button class="tab-button" data-tab="world">
+        <button class="tab-button" data-tab="investments">
+          <img src="assets/images/inversiones.webp" alt="Icono de Inversiones" class="tab-icon">
+          <span>Inversiones</span>
+        </button>
+        <button class="tab-button" data-tab="earth.pnh">
           <img src="assets/images/earth.webp" alt="Icono de Mundo" class="tab-icon">
+          <span>Mundo</span>
         </button>
       </div>
 
       <div class="tab-content active" id="upgrades">
         <div class="section" id="moneySection">
           <h3 class="game-title">
-            Operaciones de Dinero <i class="fas fa-chevron-down"></i>
+            Mejoras de Dinero <i class="fas fa-chevron-down"></i>
           </h3>
           <div id="moneyUpgrades"></div>
         </div>
 
         <div class="section" id="esbirrosSection">
           <h3 class="game-title">
-            Operaciones de Esbirros <i class="fas fa-chevron-down"></i>
+            Mejoras de Esbirros <i class="fas fa-chevron-down"></i>
           </h3>
           <div id="esbirrosUpgrades"></div>
         </div>
 
         <div class="section" id="policeSection">
           <h3 class="game-title">
-            Operaciones Anti-Policía <i class="fas fa-chevron-down"></i>
+            Mejoras Anti-Policía <i class="fas fa-chevron-down"></i>
           </h3>
           <div id="policeUpgrades"></div>
         </div>
       </div>
 
-      <div class="tab-content" id="abilities">
-        <div class="abilities-grid">
-          <div class="ability-column">
-            <h3 class="game-title"><i class="fas fa-hand-holding-usd"></i> Económicas</h3>
-            <div id="economicAbilities"></div>
+      <div class="tab-content" id="investments">
+        <div class="investments-grid">
+          <div class="investment-column">
+            <h3 class="game-title"><i class="fas fa-hand-holding-usd"></i> Inversiones Click</h3>
+            <div id="clickInvestments"></div>
           </div>
-          <div class="ability-column">
+          <div class="investment-column">
             <h3 class="game-title"><i class="fas fa-user-friends"></i> Sociales</h3>
-            <div id="socialAbilities"></div>
+            <div id="socialInvestments"></div>
           </div>
-          <div class="ability-column">
+          <div class="investment-column">
             <h3 class="game-title"><i class="fas fa-shield-alt"></i> Militares</h3>
-            <div id="militaryAbilities"></div>
+            <div id="militaryInvestments"></div>
           </div>
         </div>
       </div>
 
-      <div class="tab-content" id="world">
+      <div class="tab-content" id="earth.pnh">
         <div class="sidebar-content">
           <h2 class="game-title">Progreso de Países</h2>
           <div class="country-list-container">

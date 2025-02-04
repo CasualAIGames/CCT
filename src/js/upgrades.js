@@ -1,10 +1,11 @@
+// upgrades.js
 export const moneyUpgrades = [
   {
     id: "u-chatarra-dinero",
     name: "Compraventa de chatarra",
-    desc: "Coge eso que no usas y véndelo.",
+    desc: "Recicla la basura ajena y gana unos dólares.",
     baseCost: 50,
-    effectMoneySec: 25456215,
+    effectMoneySec: 26542465,
     rank: 1,
     times: 0,
     image: "assets/images/chatarra.webp"
@@ -12,7 +13,7 @@ export const moneyUpgrades = [
   {
     id: "u-abuelas-dinero",
     name: "Robar a abuelas",
-    desc: "Pega un tirón al bolso de tu vecina.",
+    desc: "Róbale el bolso a tu vecina... ¡es por una buena causa (la tuya)! ",
     baseCost: 150,
     effectMoneySec: 6,
     rank: 2,
@@ -22,7 +23,7 @@ export const moneyUpgrades = [
   {
     id: "u-prestar-dinero",
     name: "Prestar Dinero",
-    desc: "Obtén ingresos prestando dinero con intereses.",
+    desc: "Ofrece 'ayuda financiera' con intereses... muy altos.",
     baseCost: 500,
     effectMoneySec: 20,
     rank: 3,
@@ -32,7 +33,7 @@ export const moneyUpgrades = [
   {
     id: "u-estafa-cripto",
     name: "Estafa de criptomonedas",
-    desc: "Engaña a alguien más tonto que tú sin moverte de casa.",
+    desc: "Engaña a alguien más tonto que tú desde casa. ¡Al infinito y más allá... de la blockchain!",
     baseCost: 1500,
     effectMoneySec: 60,
     rank: 4,
@@ -42,7 +43,7 @@ export const moneyUpgrades = [
   {
     id: "u-punto-de-droga",
     name: "Punto de Venta de Droga",
-    desc: "Expande la red vendiendo mercancía ilegal.",
+    desc: "Monta un 'dispensario de caramelos' para adultos.",
     baseCost: 5000,
     effectMoneySec: 200,
     rank: 5,
@@ -52,7 +53,7 @@ export const moneyUpgrades = [
   {
     id: "u-coches-robados",
     name: "Venta de coches robados",
-    desc: "Ve a barrios ricos y elige el que más te guste.",
+    desc: "Consigue 'nuevos' vehículos sin pasar por el concesionario.",
     baseCost: 15000,
     effectMoneySec: 400,
     rank: 6,
@@ -62,7 +63,7 @@ export const moneyUpgrades = [
   {
     id: "u-lavado-dinero",
     name: "Local de Lavado de Dinero",
-    desc: "Blanquea efectivo sin rastro.",
+    desc: "Blanquea el dinero negro... ¡como la ropa sucia en la lavadora!",
     baseCost: 45000,
     effectMoneySec: 900,
     rank: 7,
@@ -72,7 +73,7 @@ export const moneyUpgrades = [
   {
     id: "u-centralita-llamadas",
     name: "Centralita de estafas telefónicas",
-    desc: "Llama sin parar a la hora de dormir.",
+    desc: "Molesta a la gente... ¡y que te paguen por ello!",
     baseCost: 135000,
     effectMoneySec: 2700,
     rank: 8,
@@ -82,7 +83,7 @@ export const moneyUpgrades = [
   {
     id: "u-banco-clandestino",
     name: "Banco clandestino",
-    desc: "Finanzas ocultas para grandes sumas.",
+    desc: "Un banco... pero sin papeleo ni preguntas incómodas.",
     baseCost: 400000,
     effectMoneySec: 8000,
     rank: 9,
@@ -92,7 +93,7 @@ export const moneyUpgrades = [
   {
     id: "u-empresa-financiera",
     name: "Empresa Financiera Clandestina",
-    desc: "Gestiona inversiones para maximizar beneficios.",
+    desc: "Mueve el dinero en la sombra... ¡y hazte rico en secreto!",
     baseCost: 1200000,
     effectMoneySec: 24000,
     rank: 10,
@@ -105,7 +106,7 @@ export const esbirrosUpgrades = [
   {
     id: "u-boca-a-boca",
     name: "Boca a Boca",
-    desc: "Rumores callejeros para reclutar.",
+    desc: "Corre la voz... ¡recluta gente con labia!",
     baseCost: 100,
     effectEsb: 1,
     rank: 1,
@@ -115,7 +116,7 @@ export const esbirrosUpgrades = [
   {
     id: "u-recluta-bares",
     name: "Bravucones de Bar",
-    desc: "Matones locales por unas monedas.",
+    desc: "Busca tipos duros en los bares de mala muerte.",
     baseCost: 300,
     effectEsb: 3,
     rank: 2,
@@ -125,7 +126,7 @@ export const esbirrosUpgrades = [
   {
     id: "u-pandilla-calle",
     name: "Pandilla Callejera",
-    desc: "Recluta a jóvenes problemáticos.",
+    desc: "Únete a la pandilla de la esquina... ¡o créala tú!",
     baseCost: 1000,
     effectEsb: 10,
     rank: 3,
@@ -135,7 +136,7 @@ export const esbirrosUpgrades = [
   {
     id: "u-campamento-basico",
     name: "Campamento Básico",
-    desc: "Entrenamiento rápido en un almacén.",
+    desc: "Entrena a tus esbirros en un descampado... ¡con latas y palos!",
     baseCost: 3500,
     effectEsb: 30,
     rank: 4,
@@ -145,7 +146,7 @@ export const esbirrosUpgrades = [
   {
     id: "u-conexiones-prisiones",
     name: "Conexiones en Prisiones",
-    desc: "Recluta a los reclusos más peligrosos.",
+    desc: "Recluta 'talento' entre rejas. ¡La reinserción es nuestro fuerte!",
     baseCost: 12000,
     effectEsb: 120,
     rank: 5,
@@ -155,7 +156,7 @@ export const esbirrosUpgrades = [
   {
     id: "u-alianza-mafias",
     name: "Alianzas con Mafias Locales",
-    desc: "Pactos con criminales establecidos.",
+    desc: "Pacta con 'familias' locales... ¡la unión hace la fuerza (y el crimen)! ",
     baseCost: 40000,
     effectEsb: 400,
     rank: 6,
@@ -165,7 +166,7 @@ export const esbirrosUpgrades = [
   {
     id: "u-gimnasio-barrio",
     name: "Gimnasio de Barrio",
-    desc: "Entrena a los más fuertes gratis.",
+    desc: "Monta un gimnasio... ¡donde se levantan pesas y se rompen cabezas!",
     baseCost: 150000,
     effectEsb: 1500,
     rank: 7,
@@ -175,7 +176,7 @@ export const esbirrosUpgrades = [
   {
     id: "u-laboratorio-biologico",
     name: "Laboratorio Biológico",
-    desc: "Mejora fuerza y lealtad de reclutas.",
+    desc: "Crea 'mejoras genéticas' para tus esbirros... ¡algo un poco turbio!",
     baseCost: 500000,
     effectEsb: 5000,
     rank: 8,
@@ -185,7 +186,7 @@ export const esbirrosUpgrades = [
   {
     id: "u-paramilitares",
     name: "Grupos Paramilitares",
-    desc: "Entrenamiento militar y armamento pesado.",
+    desc: "Contrata mercenarios 'con experiencia'... ¡y sin escrúpulos!",
     baseCost: 2000000,
     effectEsb: 20000,
     rank: 9,
@@ -195,7 +196,7 @@ export const esbirrosUpgrades = [
   {
     id: "u-estado-paralelo",
     name: "Estado Paralelo",
-    desc: "Control de instituciones clave.",
+    desc: "Crea tu propio 'gobierno en la sombra'... ¡y domina el mundo!",
     baseCost: 7000000,
     effectEsb: 70000,
     rank: 10,
@@ -208,238 +209,214 @@ export const policeUpgrades = [
   {
     id: "police-boost-1",
     name: "Sobornos Menores",
-    desc: "Paga a comisarías locales. Reduce 1 estrella.",
-    baseCost: 300, 
-    effectStarsReduction: 1, 
+    desc: "Unta a los polis de base... ¡con donuts y café!",
+    baseCost: 300,
+    effectStarsReduction: 1,
     rank: 1,
     times: 0,
-    type: "police",
     image: "assets/images/police-sobornos-menores.webp"
   },
   {
     id: "police-boost-2",
     name: "Influencia Judicial",
-    desc: "Favores en juzgados: reduce 1 estrella + algo de resistencia.",
+    desc: "Compra jueces... ¡para que miren a otro lado!",
     baseCost: 800,
     effectStarsReduction: 1,
     effectPoliceResistance: 0.15,
     rank: 2,
     times: 0,
-    type: "police",
     image: "assets/images/police-influencia-judicial.webp"
   },
   {
     id: "police-boost-3",
     name: "Campaña de Desinformación",
-    desc: "Difunde bulos para frenar la policía. Reduce 2 estrellas.",
+    desc: "Crea noticias falsas... ¡para confundir a la opinión pública!",
     baseCost: 2000,
     effectStarsReduction: 2,
     rank: 3,
     times: 0,
-    type: "police",
     image: "assets/images/police-desinformacion.webp"
   },
   {
     id: "police-boost-4",
     name: "Infiltración Policial",
-    desc: "Tienes topos en la policía: +20% resistencia.",
+    desc: "Mete un topo en la comisaría... ¡para saber qué traman!",
     baseCost: 5000,
     effectPoliceResistance: 0.25,
     rank: 4,
     times: 0,
-    type: "police",
     image: "assets/images/police-infiltracion.webp"
   },
   {
     id: "police-boost-5",
     name: "Pacto con Comisarios",
-    desc: "Reduce 2 estrellas y +10% resistencia.",
+    desc: "Haz 'amigos' en la cúpula policial... ¡y que te deban favores!",
     baseCost: 12000,
     effectStarsReduction: 2,
     effectPoliceResistance: 0.15,
     rank: 5,
     times: 0,
-    type: "police",
     image: "assets/images/police-pacto-comisarios.webp"
   },
   {
     id: "police-boost-6",
     name: "Manipulación de Pruebas",
-    desc: "Oculta evidencias: reduce 3 estrellas.",
+    desc: "Haz desaparecer 'evidencias'... ¡y que la culpa sea de otro!",
     baseCost: 30000,
     effectStarsReduction: 3,
     effectPoliceResistance: 0.05,
     rank: 6,
     times: 0,
-    type: "police",
     image: "assets/images/police-manipulacion-pruebas.webp"
   }
 ]
 
-export const weaponsUpgrades = [
+
+export const clickInvestments = [
   {
     id: "economic-boost-1",
     name: "Marketing Viral",
-    desc: "Hazte viral: +10% de ingresos por click.",
+    desc: "Haz que tu 'producto' se haga viral... ¡y que todos lo quieran! Aumenta los ingresos por click.",
     baseCost: 500,
     effect: 0.10,
     rank: 1,
     times: 0,
-    type: "economic",
     image: "assets/images/economic-marketing-viral.webp"
   },
   {
     id: "economic-boost-2",
     name: "Tácticas de Persuasión",
-    desc: "Vende la moto: +15% de ingresos por click.",
+    desc: "Aprende a 'convencer' a cualquiera... ¡de que te dé su dinero! Aumenta los ingresos por click.",
     baseCost: 2500,
     effect: 0.15,
     rank: 2,
     times: 0,
-    type: "economic",
     image: "assets/images/economic-persuasion.webp"
   },
   {
     id: "economic-boost-3",
     name: "Ingeniería Social",
-    desc: "Manipula mentes: +20% de ingresos por click.",
+    desc: "Manipula mentes... ¡para que hagan lo que tú quieras (comprar)! Aumenta los ingresos por click.",
     baseCost: 7500,
     effect: 0.20,
     rank: 3,
     times: 0,
-    type: "economic",
     image: "assets/images/economic-ingenieria-social.webp"
   },
   {
     id: "economic-boost-4",
     name: "Publicidad Subliminal",
-    desc: "Mensajes ocultos: +25% de ingresos por click.",
+    desc: "Mete mensajes ocultos en la publicidad... ¡para que compren sin pensar! Aumenta los ingresos por click.",
     baseCost: 20000,
     effect: 0.25,
     rank: 4,
     times: 0,
-    type: "economic",
     image: "assets/images/economic-publicidad-subliminal.webp"
   },
   {
     id: "economic-boost-5",
     name: "Monopolio del Mercado",
-    desc: "Controla el mercado: +30% de ingresos por click.",
+    desc: "Elimina a la competencia... ¡y que solo te compren a ti! Aumenta los ingresos por click.",
     baseCost: 60000,
     effect: 0.30,
     rank: 5,
     times: 0,
-    type: "economic",
     image: "assets/images/economic-monopolio.webp"
-  },
+  }
+];
+
+export const militaryInvestments = [
   {
     id: "military-boost-1",
     name: "Armas Caseras",
-    desc: "Tus esbirros ganan +10% de efectividad.",
+    desc: "Fabrica armas con lo que encuentres... ¡en el garaje de casa! Aumenta la efectividad de los esbirros.",
     baseCost: 600,
     effect: 0.10,
     rank: 1,
     times: 0,
-    type: "military",
     image: "assets/images/weapons-armas-caseras.webp"
   },
   {
     id: "military-boost-2",
     name: "Soldados Mercenarios",
-    desc: "Personal entrenado: +15% de efectividad.",
+    desc: "Contrata 'profesionales'... ¡a los que no les importa mancharse las manos! Aumenta la efectividad de los esbirros.",
     baseCost: 3000,
     effect: 0.15,
     rank: 2,
     times: 0,
-    type: "military",
     image: "assets/images/weapons-soldados-mercenarios.webp"
   },
   {
     id: "military-boost-3",
     name: "Tecnología Avanzada",
-    desc: "Equipo moderno: +20% de efectividad.",
+    desc: "Usa 'gadgets' de última generación... ¡para tener ventaja! Aumenta la efectividad de los esbirros.",
     baseCost: 8000,
     effect: 0.20,
     rank: 3,
     times: 0,
-    type: "military",
     image: "assets/images/weapons-tecnologia-avanzada.webp"
   },
   {
     id: "military-boost-4",
     name: "Entrenamiento Elite",
-    desc: "Lleva a tus esbirros al límite: +25%.",
+    desc: "Entrena a tus esbirros como 'fuerzas especiales'... ¡para que sean letales! Aumenta la efectividad de los esbirros.",
     baseCost: 16000,
     effect: 0.25,
     rank: 4,
     times: 0,
-    type: "military",
     image: "assets/images/weapons-entrenamiento-elite.webp"
   },
   {
     id: "military-boost-5",
     name: "Armamento Definitivo",
-    desc: "Armas de última generación: +30%.",
+    desc: "Consigue armas 'de destrucción masiva'... ¡para que tiemble el mundo! Aumenta la efectividad de los esbirros.",
     baseCost: 35000,
     effect: 0.30,
     rank: 5,
     times: 0,
-    type: "military",
     image: "assets/images/weapons-armamento-definitivo.webp"
   },
   {
     id: "military-boost-6",
-    name: "Rescate de Aliados",
-    desc: "Libera esbirros arrestados en países complicados.",
+    name: "Rescate de Esbirros",
+    desc: "Planifica y ejecuta rescates para liberar a tus esbirros arrestados. Permite rescatar esbirros arrestados en países dominados.",
     baseCost: 100000,
-    effect: 0.05,
+    effect: 0.05, // Probabilidad base de éxito por nivel
     rank: 6,
     times: 0,
-    type: "military",
-    image: "assets/images/weapons-rescate-aliados.webp"
-  },
+    image: "assets/images/weapons-rescate-esbirros.webp"
+  }
+];
+
+export const socialInvestments = [
   {
     id: "social-boost-1",
     name: "Relaciones Públicas",
-    desc: "Mejora tu imagen. Menos eventos policiales.",
+    desc: "Contrata 'expertos en imagen'... ¡para lavar tu reputación! Reduce el porcentaje de esbirros arrestados por segundo.",
     baseCost: 1000,
-    effect: 10,
+    effect: 0.05, // Reducción del % de arrestos (ejemplo: 0.05 = 5%)
     rank: 1,
     times: 0,
-    type: "social",
     image: "assets/images/social-relaciones-publicas.webp"
   },
   {
     id: "social-boost-2",
     name: "Eventos Benéficos",
-    desc: "Dona a causas sociales. Menos controles.",
+    desc: "Organiza 'actos de caridad'... ¡para que te vean como un santo! Reduce el porcentaje de esbirros arrestados por segundo.",
     baseCost: 5000,
-    effect: 20,
+    effect: 0.10, // Reducción del % de arrestos (ejemplo: 0.10 = 10%)
     rank: 2,
     times: 0,
-    type: "social",
     image: "assets/images/social-eventos-beneficos.webp"
   },
   {
-    id: "heat_management-boost-1",
-    name: "Conductores de Huida",
-    desc: "Menos probabilidad de ganar estrellas.",
-    baseCost: 1200,
-    effect: 2,
-    rank: 1,
+    id: "social-boost-3",
+    name: "Lobby Político",
+    desc: "Compra 'influencia política'... ¡para cambiar las leyes a tu favor! Reduce el porcentaje de esbirros arrestados por segundo.",
+    baseCost: 15000,
+    effect: 0.15, // Reducción del % de arrestos
+    rank: 3,
     times: 0,
-    type: "heat_management",
-    image: "assets/images/heat_management-conductores-huida.webp"
-  },
-  {
-    id: "heat_management-boost-2",
-    name: "Red de Confidentes",
-    desc: "Reduce mucho la probabilidad de subir estrellas.",
-    baseCost: 6000,
-    effect: 4,
-    rank: 2,
-    times: 0,
-    type: "heat_management",
-    image: "assets/images/heat_management-red-confidentes.webp"
+    image: "assets/images/social-lobby-politico.webp"
   }
-]
+];
