@@ -139,13 +139,10 @@ import { moneyUpgrades, esbirrosUpgrades,
    clickInvestments: clickInvestments.map(u => ({ times: 0 })),
    militaryInvestments: militaryInvestments.map(u => ({ times: 0 })),
    socialInvestments: socialInvestments.map(u => ({ times: 0 })),
-   socialArrestReductionPercentage: 0, // Nuevo estado para el efecto de mejoras sociales
+   socialArrestReductionPercentage: 0,
    firstSession: false,
    startingCountryExpansionMultiplier: 1,
    lastHeatDecrease: 0,
-   reconquestEvent: null,
-   lastPoliceEventCheck: 0,
-   rescueMinionsActive: false,
    lastStarsValue: 0
  }
  let gameState = { ...defaultGameState }
@@ -193,12 +190,6 @@ import { moneyUpgrades, esbirrosUpgrades,
      case "notEnoughMoney": icon = '<i class="fas fa-exclamation-triangle"></i> '; break
      case "countryConquered": icon = '<i class="fas fa-flag-checkered"></i> '; break
      case "auth": icon = '<i class="fas fa-exclamation-circle"></i> '; break
-     case "reconquest": icon = '<i class="fas fa-undo"></i> '; break
-     case "policeControl": icon = '<i class="fas fa-handcuffs"></i> '; break
-     case "economicBlockade": icon = '<i class="fas fa-ban"></i> '; break
-     case "hideoutRaid": icon = '<i class="fas fa-house-damage"></i> '; break
-     case "rescueSuccess": icon = '<i class="fas fa-user-friends"></i> '; break
-     case "rescueFail": icon = '<i class="fas fa-user-slash"></i> '; break
    }
    const cl = createNotificationCloseButton(d, cont)
    d.appendChild(cl)
@@ -307,15 +298,6 @@ import { moneyUpgrades, esbirrosUpgrades,
    }
  }
 
- function onCountryMouseOver(e) {
-   // Puedes añadir código aquí para manejar el evento mouseover, por ejemplo, resaltar el país
-   // Por ahora, lo dejamos vacío para simplemente solucionar el error
- }
-
- function onCountryMouseOut(e) {
-   // Puedes añadir código aquí para manejar el evento mouseout, por ejemplo, resetear el estilo del país
-   // Por ahora, lo dejamos vacío para simplemente solucionar el error
- }
 
  function handleAuthStateChanged(u){
    gameState.currentUser = u
@@ -437,7 +419,7 @@ import { moneyUpgrades, esbirrosUpgrades,
  function updatePerSecondStats(){
    gameState.totalMoneyUpgradesSec = moneyUpgrades.reduce((acc,u) => acc + (u.effectMoneySec || 0)*u.times, 0)
    gameState.moneyPerSecond = Math.max(0, gameState.totalMoneyUpgradesSec)
-   gameState.arrestedPerSecond = (gameState.lastArrestIncrement / 5) * (1 - gameState.socialArrestReductionPercentage); // APLICANDO REDUCCIÓN SOCIAL
+   gameState.arrestedPerSecond = (gameState.lastArrestIncrement / 5) * (1 - gameState.socialArrestReductionPercentage);
    gameState.esbirrosPerSecond = (gameState.totalEsbirrosUpgrades * gameState.esbirrosPerTickMultiplier * (1 + gameState.esbirrosMultiplierPercentage))
  }
  function displayInitialMinion(iso){
@@ -648,7 +630,7 @@ import { moneyUpgrades, esbirrosUpgrades,
    } else if(u.id.startsWith("military-boost")){
      gameState.esbirrosMultiplierPercentage += u.effect
    } else if(u.id.startsWith("social-boost")){
-     gameState.socialArrestReductionPercentage += u.effect; // APLICANDO EFECTO SOCIAL
+     gameState.socialArrestReductionPercentage += u.effect;
    }
    updatePerSecondStats()
    renderStats()
@@ -1159,7 +1141,7 @@ import { moneyUpgrades, esbirrosUpgrades,
    }
    gameState.totalArrested += newArrestsGlobal
    gameState.lastArrestIncrement = newArrestsGlobal
-   gameState.arrestedPerSecond = (gameState.lastArrestIncrement / 5) * (1 - gameState.socialArrestReductionPercentage); // APLICANDO REDUCCIÓN SOCIAL
+   gameState.arrestedPerSecond = (gameState.lastArrestIncrement / 5) * (1 - gameState.socialArrestReductionPercentage);
    gameState.moneyPerSecond = Math.max(0, gameState.totalMoneyUpgradesSec)
    gameState.playerMoney += gameState.moneyPerSecond
    if(checkGameOver()){
@@ -1276,18 +1258,16 @@ import { moneyUpgrades, esbirrosUpgrades,
  fetch("./data/countriesWithPopulation.geo.json")
  .then(r => r.json())
  .then(d => {
-   console.log("Datos de países cargados:", d); // AÑADE ESTA LÍNEA
+   console.log("Datos de países cargados:", d);
    countriesData = d
    geojsonLayer = L.geoJSON(d, {
      style: () => ({ color:"#555", weight:1, fillColor:"#f0f0f0", fillOpacity:0.2 }),
      onEachFeature: (f,l) => l.on({
-       click: onCountryClick,
-       mouseover: onCountryMouseOver, // <--- Error here: onCountryMouseOver is not defined
-       mouseout: onCountryMouseOut // <--- Likely another error: onCountryMouseOut is not defined
+       click: onCountryClick
      })
    }).addTo(map)
    d.features.forEach(f => {
-     console.log("País en el loop:", f.properties.name); // AÑADE ESTA LÍNEA
+     console.log("País en el loop:", f.properties.name);
      const opt = document.createElement("option")
      opt.value = f.id
      opt.textContent = f.properties.name
@@ -1295,7 +1275,4 @@ import { moneyUpgrades, esbirrosUpgrades,
    })
    initializeAuth(handleAuthStateChanged)
    renderInvestments()
- })
- .catch(error => { // MODIFICA EL .catch PARA LOGUEAR EL ERROR
-   console.error("Error al cargar el archivo JSON de países:", error); // AÑADE ESTA LÍNEA
  })
