@@ -126,7 +126,9 @@
       <div class="banner-container">
         <div class="banner-stats">
           <div class="stat-item money-container">
-            <img src="assets/images/dinero.webp" alt="Icono de Dinero" class="banner-icon">
+            <div id="iconMoneyInfo">
+              <img src="assets/images/dinero.webp" alt="Icono de Dinero" class="banner-icon">
+            </div>
             <span id="bannerMoney">100</span>
             <div class="money-per-second-container">
               +<span id="moneyPerSecond">0</span> $/seg
@@ -134,7 +136,9 @@
           </div>
 
           <div class="stat-item esbirro-container">
-            <img src="assets/images/esbirro.webp" alt="Icono de Esbirros" class="banner-icon">
+            <div id="iconEsbirrosInfo">
+              <img src="assets/images/esbirro.webp" alt="Icono de Esbirros" class="banner-icon">
+            </div>
             <span id="bannerEsbirros">0</span>
             <div class="esbirros-per-second-container">
               +<span id="esbirrosPerSecond">0</span> esb/seg
@@ -142,7 +146,9 @@
           </div>
 
           <div class="stat-item arrested-container">
-            <img src="assets/images/policia.webp" alt="Icono de Detenidos" class="banner-icon">
+            <div id="iconPoliceInfo">
+              <img src="assets/images/policia.webp" alt="Icono de Detenidos" class="banner-icon">
+            </div>
             <span id="bannerArrested">0</span>
             <div class="arrested-per-second-container">
               +<span id="arrestedPerSecond">0</span> det/seg
@@ -242,13 +248,13 @@
       </div>
     </div>
 
-    <div id="newsPopup" class="news-popup hidden">
+    <div id="newsPopup" class="hidden">
       <div class="news-content">
-        <span class="close-news-btn">×</span>
-        <h3 class="news-title" id="popupNewsTitle"></h3>
-        <p class="news-description" id="popupNewsDescription"></p>
+          <h3 id="popupNewsTitle"></h3>  <!--  Asegúrate de que este ID existe en tu HTML -->
+          <p id="newsPopupDescription"></p>
+          <button class="close-news-btn">Cerrar</button>
       </div>
-    </div>
+  </div>
     <div id="newsOverlay" class="overlay hidden"></div>
     <script src="src/js/main.js" type="module"></script>
     <script src="src/js/particles.js" type="module"></script>

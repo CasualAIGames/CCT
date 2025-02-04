@@ -1,10 +1,10 @@
-import { moneyUpgrades, esbirrosUpgrades, 
+import { moneyUpgrades, esbirrosUpgrades,
   policeUpgrades, clickInvestments, militaryInvestments, socialInvestments } from "./upgrades.js"
  import { generateWelcomeMessage, generateMoneyNews, generateEsbirrosNews, generatePoliceNews } from "./ia.js"
  import { initializeAuth, logout, register, login } from "./auth.js"
  import { database, ref, set, get } from "./firebase-config.js"
  import { generateMoneyParticles } from "./particles.js"
- 
+
  const mapElement = document.getElementById("map")
  const notificationContainer = document.getElementById("notificationContainer")
  const statsBanner = document.getElementById("statsBanner")
@@ -64,11 +64,11 @@ import { moneyUpgrades, esbirrosUpgrades,
  const iconEsbirrosInfo = document.getElementById("iconEsbirrosInfo")
  const iconPoliceInfo = document.getElementById("iconPoliceInfo")
  const appContainer = document.getElementById("app-container")
- 
- 
+
+
  const map = L.map(mapElement, { noWrap: true, minZoom: 2, maxZoom: 18 }).setView([40, -3], 5)
  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{noWrap:true}).addTo(map)
- 
+
  let geojsonLayer = null
  let countriesData = null
  let esbirroMarker = null
@@ -104,7 +104,7 @@ import { moneyUpgrades, esbirrosUpgrades,
  const BASE_TENSION_UPGRADE = 2
  const MIN_POLICE_RESISTANCE_EFFECT = 0.1
  const DOMINANCE_FACTOR_MULTIPLIER = 2
- 
+
  const defaultGameState = {
    playerMoney: 100,
    totalArrested: 0,
@@ -149,12 +149,12 @@ import { moneyUpgrades, esbirrosUpgrades,
    lastStarsValue: 0
  }
  let gameState = { ...defaultGameState }
- 
+
  const moneyIcon = L.icon({ iconUrl: "assets/images/iconodinero.webp", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] })
  const esbirrosIcon = L.icon({ iconUrl: "assets/images/iconoesbirro.webp", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] })
  const policeIcon = L.icon({ iconUrl: "assets/images/iconopolicia.webp", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] })
  const welcomeIcon = L.icon({ iconUrl: "assets/images/iconoinfo.webp", iconSize: [64,64], iconAnchor: [32,64], className: "esbirro-marker" })
- 
+
  function formatNumber(num) {
    if(isNaN(num)) return "NaN"
    const s = ["","K","M","B","T","P","E"]
@@ -306,6 +306,17 @@ import { moneyUpgrades, esbirrosUpgrades,
      }, NOTIFICATION_DURATION)
    }
  }
+
+ function onCountryMouseOver(e) {
+   // Puedes añadir código aquí para manejar el evento mouseover, por ejemplo, resaltar el país
+   // Por ahora, lo dejamos vacío para simplemente solucionar el error
+ }
+
+ function onCountryMouseOut(e) {
+   // Puedes añadir código aquí para manejar el evento mouseout, por ejemplo, resetear el estilo del país
+   // Por ahora, lo dejamos vacío para simplemente solucionar el error
+ }
+
  function handleAuthStateChanged(u){
    gameState.currentUser = u
    if(u){
@@ -383,11 +394,14 @@ import { moneyUpgrades, esbirrosUpgrades,
    })
  })
  document.querySelectorAll("form").forEach(f => {
-   f.addEventListener("keydown", e => {
-     if(e.key === "Enter") e.preventDefault()
-       e.preventDefault()
-   })
- })
+  f.addEventListener("keydown", e => {
+    if(e.key === "Enter") {
+      e.preventDefault()
+    }
+  })
+})
+
+
  showRegisterButton.addEventListener("click", () => {
    loginFormContainer.classList.add("hidden")
    registerFormContainer.classList.remove("hidden")
@@ -509,7 +523,7 @@ import { moneyUpgrades, esbirrosUpgrades,
    } else if(type === "socialInvestments"){
      effTxt += `<div class="effect sub-effect">Reduce arrestos: <span class="value">${(u.effect*100).toFixed(1)}</span>%</div>`
    }
- 
+
    const imgClass = `upgrade-image ${locked ? "upgrade-image-locked" : ""}`
    const iH = u.image ? `<img src="${u.image}" alt="${u.name}" class="${imgClass}">` : ""
    const upgradeDetailsDiv = document.createElement('div');
@@ -574,13 +588,13 @@ import { moneyUpgrades, esbirrosUpgrades,
      cont.appendChild(el)
    }
  }
- 
+
  function renderInvestments(){
    renderUpgradesList(clickInvestmentsContainer, clickInvestments, buyWeaponUpgrade, "clickInvestments")
    renderUpgradesList(socialInvestmentsContainer, socialInvestments, buyWeaponUpgrade, "socialInvestments")
    renderUpgradesList(militaryInvestmentsContainer, militaryInvestments, buyWeaponUpgrade, "militaryInvestments")
  }
- 
+
  function renderUpgrades(){
    renderUpgradesList(moneyUpgradesContainer, moneyUpgrades, buyMoneyUpgrade, "money")
    renderUpgradesList(esbirrosUpgradesContainer, esbirrosUpgrades, buyEsbirrosUpgrade, "esbirros")
@@ -660,7 +674,7 @@ import { moneyUpgrades, esbirrosUpgrades,
    const newStars = gameState.policeStars + starIncrease
    recalcPoliceStarsFromValue(newStars)
  }
- 
+
  function attemptRescueMinions(countryIso) {
    if (gameState.rescueMinionsActive) return
    gameState.rescueMinionsActive = true
@@ -708,7 +722,7 @@ import { moneyUpgrades, esbirrosUpgrades,
      }
    }
  }
- 
+
  let clickTimes = []
  btnMoneyClickElement.addEventListener("click", async e => {
    if(!gameState.gameActive) return
@@ -728,12 +742,6 @@ import { moneyUpgrades, esbirrosUpgrades,
  })
  function onCountryClick(e){
    showCountryDetail(e.target.feature.id)
- }
- function onCountryMouseOver(e){
-   showCountryMouseOver(e)
- }
- function onCountryMouseOut(e){
-   showCountryMouseOut(e)
  }
  function refreshGeoStyle(){
    if(!geojsonLayer) return
@@ -1268,16 +1276,18 @@ import { moneyUpgrades, esbirrosUpgrades,
  fetch("./data/countriesWithPopulation.geo.json")
  .then(r => r.json())
  .then(d => {
+   console.log("Datos de países cargados:", d); // AÑADE ESTA LÍNEA
    countriesData = d
    geojsonLayer = L.geoJSON(d, {
      style: () => ({ color:"#555", weight:1, fillColor:"#f0f0f0", fillOpacity:0.2 }),
      onEachFeature: (f,l) => l.on({
        click: onCountryClick,
-       mouseover: onCountryMouseOver,
-       mouseout: onCountryMouseOut
+       mouseover: onCountryMouseOver, // <--- Error here: onCountryMouseOver is not defined
+       mouseout: onCountryMouseOut // <--- Likely another error: onCountryMouseOut is not defined
      })
    }).addTo(map)
    d.features.forEach(f => {
+     console.log("País en el loop:", f.properties.name); // AÑADE ESTA LÍNEA
      const opt = document.createElement("option")
      opt.value = f.id
      opt.textContent = f.properties.name
@@ -1286,4 +1296,6 @@ import { moneyUpgrades, esbirrosUpgrades,
    initializeAuth(handleAuthStateChanged)
    renderInvestments()
  })
- .catch(() => {})
+ .catch(error => { // MODIFICA EL .catch PARA LOGUEAR EL ERROR
+   console.error("Error al cargar el archivo JSON de países:", error); // AÑADE ESTA LÍNEA
+ })

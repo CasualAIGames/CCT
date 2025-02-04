@@ -920,6 +920,10 @@ body.sidebar-active #notificationContainer {
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.8);
 }
+#auth-container:not(.hidden) ~ .leaflet-pane .esbirro-marker {
+  pointer-events: none;
+}
+
 
 #auth-container.hidden {
   display: none;
