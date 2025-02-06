@@ -96,7 +96,7 @@ async function generateContent(prompt) {
 function generateWelcomeMessage(gameData) {
   const { leaderName, bandName, startCountry } = gameData;
   return {
-    title: "<span class='welcome-title'>Bienvenid@</span>",
+    title: "Bienvenid@ maleant@",
     message: `
       <div class='welcome-message-container'>
         <p>¡Bienvenido, <b>${leaderName}</b> de la banda <b>${bandName}</b>!</p>

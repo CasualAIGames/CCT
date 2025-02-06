@@ -865,9 +865,21 @@ body.sidebar-active #notificationContainer {
 .modal-content .close-modal-btn:hover {
   color: white;
 }
-
-.close-leader-btn,
 .close-news-btn {
+  font-family: "Pricedown", sans-serif;
+  font-size: 24px;
+  color: #fff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+.close-leader-btn{
   position: absolute;
   top: 10px;
   right: 15px;
@@ -1676,7 +1688,7 @@ body.sidebar-active .notification {
 }
 
 #newsPopup .close-news-btn:hover {
-  color: #ff0;
+  color: rgb(255, 94, 0);
 }
 
 #newsPopup.news-money .news-icon {

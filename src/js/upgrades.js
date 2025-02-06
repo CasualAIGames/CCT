@@ -4,7 +4,7 @@ export const moneyUpgrades = [
     name: "Compraventa de chatarra",
     desc: "Convierte chatarra en pasta.",
     baseCost: 50,
-    effectMoneySec: 26542465,
+    effectMoneySec: 2,
     rank: 1,
     times: 0,
     image: "assets/images/chatarra.webp"
