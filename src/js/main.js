@@ -1,5 +1,5 @@
-import { moneyUpgrades, esbirrosUpgrades,
-  policeUpgrades, clickInvestments, militaryInvestments, socialInvestments } from "./upgrades.js"
+// src/js/main.js
+import { moneyUpgrades, esbirrosUpgrades, policeUpgrades, clickInvestments, militaryInvestments, socialInvestments } from "./upgrades.js"
 import { generateWelcomeMessage, generateMoneyNews, generateEsbirrosNews, generatePoliceNews } from "./ia.js"
 import { initializeAuth, logout, register, login } from "./auth.js"
 import { database, ref, set, get } from "./firebase-config.js"
@@ -299,21 +299,29 @@ function updatePoliceNotification(){
   }
 }
 
-let handleAuthStateChangedTimeout; // Debounce timeout variable
-function handleAuthStateChanged(u){
+let handleAuthStateChangedTimeout;
+function handleAuthStateChanged(u) {
   if (handleAuthStateChangedTimeout) {
-    clearTimeout(handleAuthStateChangedTimeout); // Clear existing timeout
+    clearTimeout(handleAuthStateChangedTimeout);
   }
-  handleAuthStateChangedTimeout = setTimeout(() => { // Set new timeout
+  handleAuthStateChangedTimeout = setTimeout(() => {
     gameState.currentUser = u;
-    if(u){
+    if (u) {      document.body.classList.remove("auth-active");
+      authContainer.classList.add("hidden");
       statsBanner.classList.remove("hidden");
+      sidebar.classList.remove("active");
+      sidebar.style.transition = "none";
+      setTimeout(() => {
+        sidebar.style.transition = "";
+      }, 50);
       loadGame(u.uid);
     } else {
-      statsBanner.classList.add("hidden");
+      document.body.classList.add("auth-active");
       authContainer.classList.remove("hidden");
+      statsBanner.classList.add("hidden");
+      sidebar.classList.remove("active");
     }
-  }, 200); // Debounce delay of 200ms (adjust if needed)
+  }, 200);
 }
 
 
@@ -325,38 +333,42 @@ window.addEventListener("beforeunload", () => {
   }
 })
 registerForm.addEventListener("submit", async e => {
-  e.preventDefault()
+  e.preventDefault();
   registerButton.disabled = true;
   addNotification("Registrando y comenzando partida...", "loading");
-  const email = registerEmailInput.value
-  const pass = registerPasswordInput.value
-  const conf = registerPasswordConfirmInput.value
-  const bName = registerBandNameInput.value
-  const sCountry = registerStartCountryInput.value
-  const lName = registerLeaderNameInput.value
-  const lImg = document.querySelector(".leader-card.selected .leader-card-image")?.getAttribute("src")
-  if(pass !== conf) {
-    addNotification("Las contraseñas no coinciden.","auth");
+  
+  const email = registerEmailInput.value;
+  const pass = registerPasswordInput.value;
+  const conf = registerPasswordConfirmInput.value;
+  const bName = registerBandNameInput.value;
+  const sCountry = registerStartCountryInput.value;
+  const lName = registerLeaderNameInput.value;
+  const lImg = document.querySelector(".leader-card.selected .leader-card-image")?.getAttribute("src");
+  
+  if (pass !== conf) {
+    addNotification("Las contraseñas no coinciden.", "auth");
     registerButton.disabled = false;
     return;
   }
-  if(!lImg) {
-    addNotification("Selecciona un líder.","auth");
+  if (!lImg) {
+    addNotification("Selecciona un líder.", "auth");
     registerButton.disabled = false;
     return;
   }
-  if(!sCountry) {
-    addNotification("Selecciona un país de inicio.","auth");
+  if (!sCountry) {
+    addNotification("Selecciona un país de inicio.", "auth");
     registerButton.disabled = false;
     return;
   }
-  gameState.bandName = bName
-  gameState.startCountry = countriesData.features.find(f => f.id===sCountry)?.properties?.name || sCountry
-  gameState.leaderName = lName
-  gameState.leaderImage = lImg
+  
+  gameState.bandName = bName;
+  gameState.startCountry = countriesData.features.find(f => f.id === sCountry)?.properties?.name || sCountry;
+  gameState.leaderName = lName;
+  gameState.leaderImage = lImg;
+  
   try {
     const u = await register(email, pass);
-    const initGame = { ...defaultGameState }
+    const initGame = { ...defaultGameState };
     Object.assign(initGame, {
       bandName: bName,
       startCountry: gameState.startCountry,
@@ -377,33 +389,56 @@ registerForm.addEventListener("submit", async e => {
       }
     });
     await set(ref(database, `users/${u.uid}/gameState`), initGame);
-    console.log("Registro exitoso, llamando a loadGame después de set");
     await loadGame(u.uid);
-    console.log("loadGame completado después del registro");
-    addNotification(`Registro exitoso para: ${email}`,"general");
+    addNotification(`Registro exitoso para: ${email}`, "general");
     authContainer.classList.add("hidden");
-    statsBanner.classList.remove("hidden"); // Ensure statsBanner is shown after loadGame
+    // Forzar ocultación del sidebar
+    sidebar.classList.remove("active");
+    sidebar.style.transition = "none";
+    document.body.classList.remove("auth-active");
+    statsBanner.classList.remove("hidden");
+    // Restaurar la transición
+    setTimeout(() => { 
+      sidebar.style.transition = ""; 
+    }, 50);
     displayInitialMinion(sCountry);
   } catch (e) {
-    addNotification(`Error de registro: ${e.message}`,"auth");
+    addNotification(`Error de registro: ${e.message}`, "auth");
     console.error("Error de registro:", e);
     registerButton.disabled = false;
   } finally {
     registerButton.disabled = false;
   }
-})
+});
+
+
 loginForm.addEventListener("submit", e => {
-  e.preventDefault()
-  const email = loginEmailInput.value
-  const pass = loginPasswordInput.value
-  login(email, pass).then(u => {
-    loadGame(u.uid)
-    authContainer.classList.add("hidden")
-    addNotification(`Inicio de sesión exitoso para: ${email}`,"general")
-  }).catch(e => {
-    addNotification(`Error de inicio de sesión: ${e.message}`,"auth")
-  })
-})
+  e.preventDefault();
+  const email = loginEmailInput.value;
+  const pass = loginPasswordInput.value;
+  login(email, pass)
+    .then(u => {
+      // Quitar de inmediato la clase 'active' y desactivar la transición para evitar el efecto de "sidebar parcial"
+      sidebar.classList.remove("active");
+      sidebar.style.transition = "none";
+      // Quitar la clase de autenticación para mostrar la interfaz principal
+      document.body.classList.remove("auth-active");
+      authContainer.classList.add("hidden");
+      statsBanner.classList.remove("hidden");
+      loadGame(u.uid).then(() => {
+        // Restaurar la transición después de un breve retardo
+        setTimeout(() => { 
+          sidebar.style.transition = ""; 
+        }, 50);
+      });
+      addNotification(`Inicio de sesión exitoso para: ${email}`, "general");
+    })
+    .catch(e => {
+      addNotification(`Error de inicio de sesión: ${e.message}`, "auth");
+    });
+});
+
+
 document.querySelectorAll("form").forEach(f => {
  f.addEventListener("keydown", e => {
    if(e.key === "Enter") {
@@ -533,7 +568,6 @@ function createUpgradeElement(u, c, canBuy, bFunc, type, locked, pRem){
   } else if(type === "socialInvestments"){
     effTxt += `<div class="effect sub-effect">Reduce arrestos: <span class="value">${(u.effect*100).toFixed(1)}</span>%</div>`
   }
-
   const imgClass = `upgrade-image ${locked ? "upgrade-image-locked" : ""}`
   const iH = u.image ? `<img src="${u.image}" alt="${u.name}" class="${imgClass}">` : ""
   const upgradeDetailsDiv = document.createElement('div');
@@ -757,7 +791,25 @@ btnMoneyClickElement.addEventListener("click", async e => {
   generateMoneyParticles(clickSpeed, btnMoneyClickElement)
 })
 function onCountryClick(e){
-  showCountryDetail(e.target.feature.id)
+  const countryId = e.target.feature.id;
+  document.querySelector('.tab-button[data-tab="world"]').click();
+  if(gameState.countryStatus[countryId] && gameState.countryStatus[countryId].esbirros > 0){
+    showCountryDetail(countryId)
+  } else {
+    document.getElementById("detailCountryName").innerText = "Este país aún no tiene presencia tu banda";
+    document.getElementById("detailPopulation").innerText = "";
+    document.getElementById("detailEsbirros").innerText = "";
+    document.getElementById("detailArrested").innerText = "";
+  }
+  geojsonLayer.eachLayer(layer => {
+    if(layer.feature?.id === countryId){
+      map.fitBounds(layer.getBounds())
+    }
+  });
+  if(window.innerWidth <= 768 && !sidebar.classList.contains("active")){
+    sidebar.classList.add("active")
+    setMenuIcon()
+  }
 }
 function refreshGeoStyle(){
   if(!geojsonLayer) return
@@ -813,8 +865,8 @@ async function loadGame(uid){
     console.log("loadGame - gameState data received from Firebase:", s);
     if(!s.exists()) {
       console.log("loadGame - no game state found in Firebase, exiting");
-      console.log("loadGame - No gameState exists in Firebase for this user. This is likely a new user."); // Log new user scenario
-      return; // Exit loadGame if no gameState exists
+      console.log("loadGame - No gameState exists in Firebase for this user. This is likely a new user.");
+      return;
     }
     const saved = s.val();
     console.log("loadGame - saved state:", saved);
@@ -840,6 +892,7 @@ async function loadGame(uid){
     renderInvestments();
     refreshGeoStyle();
     startGame();
+    notificationContainer.innerHTML = '';
 
     console.log("loadGame - UI rendered, checking first session");
 
@@ -955,34 +1008,21 @@ function renderWorldList(){
     const icon = st.dominated ? '<i class="fas fa-check-circle country-conquered"></i>' : (st.control>=50 ? '<i class="fas fa-flag country-expanding"></i>' : "")
     li.innerHTML = `${st.countryName || iso} ${icon}`
     li.addEventListener("click", () => {
-      showCountryDetail(iso)
+      document.querySelector('.tab-button[data-tab="world"]').click();
+      if(gameState.countryStatus[iso] && gameState.countryStatus[iso].esbirros > 0){
+        showCountryDetail(iso)
+      } else {
+        document.getElementById("detailCountryName").innerText = "Este país aún no tiene presencia tu banda"
+        document.getElementById("detailPopulation").innerText = ""
+        document.getElementById("detailEsbirros").innerText = ""
+        document.getElementById("detailArrested").innerText = ""
+      }
       geojsonLayer.eachLayer(ly => {
-        if(ly instanceof L.GeoJSON){
-          ly.eachLayer(featLy => {
-            if(featLy.feature.id === iso){
-              map.fitBounds(featLy.getBounds())
-            }
-          })
+        if(ly.feature?.id === iso){
+          map.fitBounds(ly.getBounds())
         }
       })
     })
-    const rescueUpgrade = militaryInvestments.find(upg => upg.id === "military-boost-6")
-    if (rescueUpgrade && rescueUpgrade.times > 0) {
-      const rescueButton = document.createElement("button")
-      rescueButton.textContent = "Rescatar Esbirros"
-      rescueButton.classList.add("rescue-button")
-      rescueButton.addEventListener("click", (e) => {
-        e.stopPropagation()
-        if (!gameState.rescueMinionsActive && st.arrestedTotal > 0) {
-          attemptRescueMinions(iso)
-        } else if (gameState.rescueMinionsActive) {
-          addNotification("Rescate en curso, espera.", "general")
-        } else if (st.arrestedTotal <= 0) {
-          addNotification("No hay esbirros arrestados aquí.", "general")
-        }
-      })
-      li.appendChild(rescueButton)
-    }
     countryListElement.appendChild(li)
   })
   if(gameState.currentIso) showCountryDetail(gameState.currentIso)
@@ -1005,6 +1045,7 @@ function startGame(){
   renderWorldList()
   refreshGeoStyle()
   updatePerSecondStats()
+  notificationContainer.innerHTML = ''
   if(!gameState.gameActive){
     gameState.gameActive = true
     startNewsGeneration()
@@ -1265,22 +1306,27 @@ leaderCards.forEach(c => {
 })
 tabButtons.forEach(btn => {
   btn.addEventListener("click", e => {
-    const tId = e.target.dataset.tab || e.target.parentElement.dataset.tab
-    tabContents.forEach(cc => cc.classList.remove("active"))
-    tabButtons.forEach(b => b.classList.remove("active"))
-    document.getElementById(tId).classList.add("active")
-    btn.classList.add("active")
-    if(tId === "world") renderWorldList()
-    renderUpgrades()
-    renderInvestments()
+    const tId = e.target.dataset.tab || e.target.parentElement.dataset.tab;
+    tabContents.forEach(cc => cc.classList.remove("active"));
+    tabButtons.forEach(b => b.classList.remove("active"));
+    document.getElementById(tId).classList.add("active");
+    btn.classList.add("active");
+    if(tId === "world") {
+      sidebar.classList.add("world-sidebar");
+      renderWorldList();
+    } else {
+      sidebar.classList.remove("world-sidebar");
+    }
+    renderUpgrades();
+    renderInvestments();
     appContainer.className = '';
     tabContents.forEach(tabContent => {
-        if (tabContent.classList.contains('active')) {
-            appContainer.classList.add(`tab-content-${tabContent.id.split('.')[0]}-active`)
-        }
-    })
-  })
-})
+      if (tabContent.classList.contains('active')) {
+        appContainer.classList.add(`tab-content-${tabContent.id.split('.')[0]}-active`);
+      }
+    });
+  });
+});
 gameTitles.forEach(tl => {
   tl.addEventListener("click", () => {
     tl.parentElement.classList.toggle("collapsed")
