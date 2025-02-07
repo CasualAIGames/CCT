@@ -167,8 +167,6 @@ const SoundManager = (() => {
       if (bgMusic && !musicStarted) {
           bgMusic.play().catch(error => {
               console.error("Error starting background music:", error);
-              // Optionally, you could attempt to play it again after a user interaction,
-              // or inform the user that music might be muted due to browser autoplay policies.
           });
           musicStarted = true;
       } else if (bgMusic && musicStarted) {
