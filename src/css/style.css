@@ -597,8 +597,6 @@ body.sidebar-active #notificationContainer {
   filter: grayscale(100%) brightness(0%);
 }
 
-
-
 .upgrade-title {
   grid-area: title;
   margin: 0;
@@ -760,9 +758,6 @@ body.sidebar-active #notificationContainer {
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
 }
 
-
-
-
 .upgrade-times-overlay {
   position: absolute;
   right: 4px;
@@ -834,7 +829,7 @@ body.sidebar-active #notificationContainer {
   line-height: 1;
   transition: color 0.2s ease;
 }
-.close-leader-btn{
+.close-leader-btn {
   position: absolute;
   top: 10px;
   right: 15px;
@@ -904,8 +899,6 @@ body.sidebar-active #notificationContainer {
 .leader-card.selected .leader-card-image {
   border-color: #FFD700;
 }
-
-
 
 #auth-container {
   position: fixed;
@@ -984,11 +977,9 @@ body.sidebar-active #notificationContainer {
 #newsPopup.news-money {
   border-color: #00ff00;
 }
-
 #newsPopup.news-esbirros {
   border-color: #ff0000;
 }
-
 #newsPopup.news-police {
   border-color: #0000ff;
 }
@@ -1013,12 +1004,10 @@ body.sidebar-active #notificationContainer {
   background-color: #00ff00;
   color: #1a1a1a;
 }
-
 #newsPopup.news-esbirros .news-banner {
   background-color: #ff0000;
   color: #fff;
 }
-
 #newsPopup.news-police .news-banner {
   background-color: #0000ff;
   color: #fff;
@@ -1179,9 +1168,6 @@ body.sidebar-active #notificationContainer {
   font-size: 0.7em;
   color: #ccc;
 }
-
-
-
 
 .player-card #playerStars {
   position: relative;
@@ -1616,16 +1602,12 @@ body.sidebar-active .notification {
   color: rgb(255, 94, 0);
 }
 
-#newsPopup.news-money .news-icon {
-  filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.7)) brightness(1.2) saturate(1.5);
-}
-
-#newsPopup.news-esbirros .news-icon {
-  filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.7)) brightness(1.2) saturate(1.5);
-}
-
+#newsPopup.news-money .news-icon,
+#newsPopup.news-esbirros .news-icon,
 #newsPopup.news-police .news-icon {
-  filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.7)) brightness(1.2) saturate(1.5);
+  filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.7))
+          brightness(1.2)
+          saturate(1.5);
 }
 
 #newsPopup .bonus-reward-container {
