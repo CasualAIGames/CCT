@@ -8,7 +8,6 @@ import { generateMoneyParticles } from "./particles.js"
 import SoundManager from "./sounds.js"
 
 SoundManager.init(); // Initialize SoundManager immediately after import
-SoundManager.startBackgroundMusic(); // Start background music immediately after init
 
 const mapElement = document.getElementById("map")
 const notificationContainer = document.getElementById("notificationContainer")
@@ -458,6 +457,7 @@ registerForm.addEventListener("submit", async e => {
     });
     await set(ref(database, `users/${u.uid}/gameState`), initGame);
     await loadGame(u.uid);
+    SoundManager.startBackgroundMusic(); // Start background music after registration and game load
     addNotification(`Registro exitoso para: ${email}`, "general");
     authContainer.classList.add("hidden");
     sidebar.classList.remove("active");
@@ -489,6 +489,7 @@ loginForm.addEventListener("submit", e => {
     authContainer.classList.add("hidden");
     statsBanner.classList.remove("hidden");
     loadGame(u.uid).then(() => {
+      SoundManager.startBackgroundMusic(); // Start background music after login and game load
       setTimeout(() => {
         sidebar.style.transition = "";
       }, 50);
@@ -1007,6 +1008,7 @@ async function loadGame(uid){
     refreshGeoStyle();
     startGame();
     notificationContainer.innerHTML = '';
+    SoundManager.startBackgroundMusic(); // Start background music after loading game
 
     if(gameState.firstSession && gameState.startCountry){
       displayInitialMinion(gameState.startCountry);
@@ -1174,7 +1176,7 @@ function startGame(){
     SoundManager.startBackgroundMusic() // Start background music on game start
   } else if(!gameState.firstSession){
     startNewsGeneration()
-    SoundManager.startBackgroundMusic() // Start background music on game load
+    SoundManager.startBackgroundMusic() // Start background music on game load. Actually, it's already started in loadGame function. Let's keep it just in case.
   }
 }
 
