@@ -1,9 +1,11 @@
-// src/js/main.js
 import { moneyUpgrades, esbirrosUpgrades, policeUpgrades, clickInvestments, militaryInvestments, socialInvestments } from "./upgrades.js"
 import { generateWelcomeMessage, generateMoneyNews, generateEsbirrosNews, generatePoliceNews } from "./ia.js"
 import { initializeAuth, logout, register, login } from "./auth.js"
 import { database, ref, set, get } from "./firebase-config.js"
 import { generateMoneyParticles } from "./particles.js"
+import SoundManager from './sounds.js';
+
+SoundManager.init();
 
 const mapElement = document.getElementById("map")
 const notificationContainer = document.getElementById("notificationContainer")
@@ -143,10 +145,12 @@ const defaultGameState = {
   firstSession: false,
   startingCountryExpansionMultiplier: 1,
   lastHeatDecrease: 0,
-  lastStarsValue: 0
+  lastStarsValue: 0,
+  gameOverSoundPlayed: false
 }
 let gameState = { ...defaultGameState }
 
+// Íconos para markers
 const moneyIcon = L.icon({ iconUrl: "assets/images/iconodinero.webp", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] })
 const esbirrosIcon = L.icon({ iconUrl: "assets/images/iconoesbirro.webp", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] })
 const policeIcon = L.icon({ iconUrl: "assets/images/iconopolicia.webp", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] })
@@ -178,7 +182,7 @@ function createNotificationCloseButton(div, cont){
   const c = document.createElement("span")
   c.classList.add("close-btn")
   c.innerText = "X"
-  c.onclick = () => removeNotificationElement(div, cont)
+  c.onclick = () => { removeNotificationElement(div, cont); SoundManager.playButtonClick(); }
   return c
 }
 
@@ -193,15 +197,16 @@ function createNotificationElement(msg, type, cont, countryName = null){
     case "notEnoughMoney": icon = '<i class="fas fa-exclamation-triangle"></i> '; break
     case "countryConquered": icon = '<i class="fas fa-flag-checkered"></i> '; break
     case "auth": icon = '<i class="fas fa-exclamation-circle"></i> '; break
-    case "loading": icon = '<i class="fas fa-spinner fa-spin"></i> '; break;
+    case "loading": icon = '<i class="fas fa-spinner fa-spin"></i> '; break
   }
   const cl = createNotificationCloseButton(d, cont)
   d.appendChild(cl)
   const t = document.createElement("div")
   t.classList.add("notification-text")
-  t.innerHTML = icon + msg + (countryName ? ` ${countryName}!` : "")
+  t.innerHTML = icon + msg + (countryName ?  ` ${countryName}! ` : "")
   d.appendChild(t)
   cont.appendChild(d)
+  SoundManager.playNotification();
   return d
 }
 
@@ -210,7 +215,8 @@ function addNotification(msg, type="general", countryName=null){
   if(type === "notEnoughMoney" && now - gameState.lastNotEnoughMoneyNotification < NOTIFICATION_DURATION) return
   if(type === "notEnoughMoney") gameState.lastNotEnoughMoneyNotification = now
 
-  const c = statsBanner.classList.contains("hidden") ? notificationContainer : notificationContainer
+  // Mismo contenedor de siempre, ya no separamos
+  const c = notificationContainer 
 
   if(type === "countryConquered"){
     if(conqueredCountriesNotification){
@@ -262,6 +268,7 @@ function easeOutQuad(t, b, c, d) {
 }
 
 function animateBonusRewardInNews(finalValue, iconType, duration = 2000, onClaim) {
+  // Mantiene el "bonusRewardContainer" en la noticia
   let container = document.getElementById("bonusRewardContainer");
   if (!container) {
     container = document.createElement("div");
@@ -298,8 +305,8 @@ function animateBonusRewardInNews(finalValue, iconType, duration = 2000, onClaim
     }
     claimBtn.disabled = true;
     claimBtn.textContent = "Reclamado";
+    SoundManager.playButtonClick();
   };
-
 
   let startTime = null;
   function step(timestamp) {
@@ -325,6 +332,7 @@ function animateBonusRewardInNews(finalValue, iconType, duration = 2000, onClaim
   requestAnimationFrame(step);
 }
 
+// Aún pueden salir "estrellas" de la policía, pero sin eventos complejos
 function updateHeatUI(){}
 function recalcPoliceStarsFromValue(stars){
   gameState.policeStars = Math.min(5, Math.max(0, stars))
@@ -356,6 +364,8 @@ function updatePoliceNotification(){
   }
 }
 
+// Eliminamos references a triggerPoliceActions, handleReconquestEvent, etc.
+
 let handleAuthStateChangedTimeout;
 function handleAuthStateChanged(u) {
   if (handleAuthStateChangedTimeout) {
@@ -373,11 +383,13 @@ function handleAuthStateChanged(u) {
         sidebar.style.transition = "";
       }, 50);
       loadGame(u.uid);
+      SoundManager.startBackgroundMusic();
     } else {
       document.body.classList.add("auth-active");
       authContainer.classList.remove("hidden");
       statsBanner.classList.add("hidden");
       sidebar.classList.remove("active");
+      SoundManager.stopBackgroundMusic();
     }
   }, 200);
 }
@@ -458,6 +470,7 @@ registerForm.addEventListener("submit", async e => {
       sidebar.style.transition = "";
     }, 50);
     displayInitialMinion(sCountry);
+    SoundManager.startBackgroundMusic();
   } catch (e){
     addNotification(`Error de registro: ${e.message}`, "auth");
     console.error("Error de registro:", e);
@@ -484,6 +497,7 @@ loginForm.addEventListener("submit", e => {
       }, 50);
     });
     addNotification(`Inicio de sesión exitoso para: ${email}`, "general");
+    SoundManager.startBackgroundMusic();
   })
   .catch(e => {
     addNotification(`Error de inicio de sesión: ${e.message}`, "auth");
@@ -501,10 +515,12 @@ document.querySelectorAll("form").forEach(f => {
 showRegisterButton.addEventListener("click", () => {
   loginFormContainer.classList.add("hidden")
   registerFormContainer.classList.remove("hidden")
+  SoundManager.playButtonClick();
 })
 showLoginButton.addEventListener("click", () => {
   loginFormContainer.classList.remove("hidden")
   registerFormContainer.classList.add("hidden")
+  SoundManager.playButtonClick();
 })
 
 function renderStats(){
@@ -514,7 +530,7 @@ function renderStats(){
     netEsb = Math.max(0, netEsb)
   }
   moneyPerSecondElement.innerText = `${formatNumber(gameState.moneyPerSecond)}`
-  esbirrosPerSecondElement.innerText = `${formatNumber(netEsb)} `
+  esbirrosPerSecondElement.innerText = `${formatNumber(netEsb)}`
   arrestedPerSecondElement.innerText = `${formatNumber(gameState.arrestedPerSecond)}`
 
   playerStarsElements.forEach((s,i) => {
@@ -533,7 +549,6 @@ function renderStats(){
   leaderImgElement.src = gameState.leaderImage || "images/placeholder.webp"
 
   statsBanner.classList.toggle("active", !statsBanner.classList.contains("hidden"))
-  statsBanner.classList.add("subtle-banner")
   updateHeatUI()
 }
 
@@ -544,6 +559,21 @@ function updatePerSecondStats(){
   gameState.esbirrosPerSecond = (gameState.totalEsbirrosUpgrades * gameState.esbirrosPerTickMultiplier * (1 + gameState.esbirrosMultiplierPercentage))
 }
 
+// Mantenemos "startNewsGeneration"/"stopNewsGeneration" para el popup de noticias
+function generateNewsUpdate(){}
+function startNewsGeneration(){
+  if(!newsInterval){
+    newsInterval = setInterval(generateNewsUpdate, 300000)
+  }
+}
+function stopNewsGeneration(){
+  if(newsInterval){
+    clearInterval(newsInterval)
+    newsInterval = null
+  }
+}
+
+// El minion de bienvenida
 function displayInitialMinion(iso){
   if(!iso || !geojsonLayer){
     startNewsGeneration()
@@ -561,10 +591,8 @@ function displayInitialMinion(iso){
   map.fitBounds(b)
   const c = b.getCenter()
   esbirroMarker = L.marker(c, { icon: welcomeIcon }).addTo(map)
-  esbirroMarker._icon.classList.add("marker-appear-animation")
   esbirroMarker.on("click", () => {
     if(esbirroMarker && esbirroMarker._icon){
-      esbirroMarker._icon.classList.add("marker-disappear-animation")
       setTimeout(() => {
         if(map.hasLayer(esbirroMarker)){
           map.removeLayer(esbirroMarker)
@@ -583,550 +611,8 @@ function displayInitialMinion(iso){
         }
       }, ICON_ANIMATION_DURATION)
     }
+    SoundManager.playButtonClick();
   })
-}
-
-function costOf(u){
-  return Math.floor(u.baseCost * Math.pow(UPGRADE_COST_MULTIPLIER, u.times))
-}
-
-function getPurchasesRemainingForUnlock(up, arr){
-  if(up.rank <= 1) return 0
-  const prev = arr.filter(x => x.rank===up.rank - 1)
-  if(prev.length === 0) return 10
-  const sum = prev.reduce((a,g) => a + g.times,0)
-  return Math.max(0, prev.length*10 - sum)
-}
-
-function isUnlocked(up, arr){
-  if(up.rank === 1) return true
-  return getPurchasesRemainingForUnlock(up, arr) <= 0
-}
-
-function createUpgradeElement(u, c, canBuy, bFunc, type, locked, pRem){
-  const d = document.createElement("div")
-  d.classList.add("upgrade-item")
-  if(locked){
-    d.classList.add("upgrade-locked")
-  } else if(!canBuy){
-    d.classList.add("upgrade-unavailable")
-  }
-  const lockedOverlay = locked ? `<div class="locked-overlay"><i class="fas fa-lock lock-icon"></i><div class="purchases-remaining">Compras de la mejora anterior restantes: <span class="remaining-count">${pRem}</span></div></div>` : ""
-
-  let effTxt = ""
-  if(type === "money"){
-    effTxt = `<div class="effect"><span class="value green-value">+${formatNumber(u.effectMoneySec)}</span> <span class="unit">$/seg</span></div>`
-  } else if(type === "esbirros"){
-    effTxt = `<div class="effect">+<span class="value green-value">${formatNumber(u.effectEsb)}</span> esb/seg</div>`
-  } else if(type === "police"){
-    if(u.effectStarsReduction){
-      effTxt += `<div class="effect">Reduce Estrellas: <span class="value">-${u.effectStarsReduction}</span></div>`
-    }
-    if(u.effectPoliceResistance){
-      effTxt += `<div class="effect">Reduce prob. policía: <span class="value">${Math.floor(u.effectPoliceResistance*100)}%</span></div>`
-    }
-  } else if (type === "clickInvestments") {
-    effTxt += `<div class="effect sub-effect">+<span class="value green-value">${(u.effect*100).toFixed(1)}</span>% ingresos/click</div>`
-  } else if(type === "militaryInvestments"){
-    effTxt += `<div class="effect sub-effect">+<span class="value green-value">${(u.effect*100).toFixed(1)}</span>% efectividad esbirros</div>`
-  } else if(type === "socialInvestments"){
-    effTxt += `<div class="effect sub-effect">Reduce arrestos: <span class="value">${(u.effect*100).toFixed(1)}</span>%</div>`
-  }
-
-  const imgClass = `upgrade-image ${locked ? "upgrade-image-locked" : ""}`
-  const iH = u.image ? `<img src="${u.image}" alt="${u.name}" class="${imgClass}">` : ""
-
-  const upgradeDetailsDiv = document.createElement('div');
-  upgradeDetailsDiv.classList.add('upgrade-details');
-  upgradeDetailsDiv.innerHTML = `<p class="upgrade-description">${u.desc}</p>${effTxt}`;
-
-  d.innerHTML = `${lockedOverlay}
-    <h5 class="upgrade-title"><span class="name">${u.name}</span></h5>
-    <div class="upgrade-row">
-      <div class="upgrade-image-container">
-        ${iH}
-        ${(!locked && u.times>0) ? `<span class="upgrade-times-overlay">x${u.times}</span>` : ""}
-      </div>
-      <div class="upgrade-info-container">
-      </div>
-      <div class="upgrade-buy-container">
-        <button class="upgrade-buy-button ${!canBuy ? "upgrade-buy-unavailable" : ""} ${locked ? "upgrade-buy-locked" : ""}">
-          ${locked ? "BLOQUEADO" : `BUY ${formatNumber(c)}$`}
-        </button>
-      </div>
-    </div>`
-
-  d.querySelector('.upgrade-info-container').appendChild(upgradeDetailsDiv);
-
-  const bB = d.querySelector(".upgrade-buy-button")
-  const purchaseHandler = e => {
-    e.stopPropagation()
-    if(locked) return
-    if(canBuy){
-      bFunc(u)
-    } else {
-      addNotification("No tienes suficiente dinero.","notEnoughMoney")
-    }
-  }
-  bB.addEventListener("pointerdown", e => {
-    e.stopPropagation()
-    bB.classList.add("active")
-  })
-  bB.addEventListener("pointerup", e => {
-    e.stopPropagation()
-    bB.classList.remove("active")
-    purchaseHandler(e)
-  })
-
-  d.addEventListener("pointerdown", e => {
-    e.stopPropagation()
-    bB.classList.add("active")
-  })
-  d.addEventListener("pointerup", e => {
-    e.stopPropagation()
-    bB.classList.remove("active")
-    purchaseHandler(e)
-  })
-
-  return d
-}
-
-function renderUpgradesList(cont, arr, bFunc, type){
-  if(!cont) return
-  cont.innerHTML = ""
-  arr.sort((a,b) => a.rank - b.rank)
-  let lockedOnce = false
-  for(const up of arr){
-    if(type==="militaryInvestments" && up.rank>5 && !Object.values(gameState.countryStatus).some(x => x.control>=50)){
-      continue
-    }
-    const c = costOf(up)
-    const canBuy = gameState.playerMoney>=c
-    const locked = !isUnlocked(up, arr) && up.rank>1
-    const pRem = getPurchasesRemainingForUnlock(up, arr)
-    if(locked && lockedOnce) continue
-    if(locked) lockedOnce = true
-    const el = createUpgradeElement(up, c, canBuy, bFunc, type, locked, pRem)
-    cont.appendChild(el)
-  }
-}
-
-function renderInvestments(){
-  renderUpgradesList(clickInvestmentsContainer, clickInvestments, buyWeaponUpgrade, "clickInvestments")
-  renderUpgradesList(socialInvestmentsContainer, socialInvestments, buyWeaponUpgrade, "socialInvestments")
-  renderUpgradesList(militaryInvestmentsContainer, militaryInvestments, buyWeaponUpgrade, "militaryInvestments")
-}
-
-function renderUpgrades(){
-  renderUpgradesList(moneyUpgradesContainer, moneyUpgrades, buyMoneyUpgrade, "money")
-  renderUpgradesList(esbirrosUpgradesContainer, esbirrosUpgrades, buyEsbirrosUpgrade, "esbirros")
-  renderUpgradesList(policeUpgradesContainer, policeUpgrades, buyPoliceUpgrade, "police")
-}
-
-async function buyMoneyUpgrade(u){
-  const c = costOf(u)
-  if(gameState.playerMoney < c) return addNotification("No tienes suficiente dinero.","notEnoughMoney")
-  gameState.playerMoney -= c
-  u.times++
-  gameState.totalMoneyUpgradesSec += (u.effectMoneySec || 0)
-  updatePerSecondStats()
-  renderStats()
-  renderUpgrades()
-  await saveGame()
-}
-
-async function buyEsbirrosUpgrade(u){
-  const c = costOf(u)
-  if(gameState.playerMoney < c) return addNotification("No tienes suficiente dinero.","notEnoughMoney")
-  gameState.playerMoney -= c
-  u.times++
-  gameState.totalEsbirrosUpgrades += (u.effectEsb || 0)
-  createAnimation(document.getElementById("bannerEsbirros"), u.effectEsb, "esbirros")
-  updatePerSecondStats()
-  renderStats()
-  renderUpgrades()
-  await saveGame()
-}
-
-async function buyPoliceUpgrade(u){
-  const c = costOf(u)
-  if(gameState.playerMoney < c) return addNotification("No tienes suficiente dinero.","notEnoughMoney")
-  gameState.playerMoney -= c
-  u.times++
-  if(u.effectStarsReduction){
-    recalcPoliceStarsFromValue(gameState.policeStars - u.effectStarsReduction)
-  }
-  if(u.effectPoliceResistance){
-    gameState.policeResistance += u.effectPoliceResistance
-  }
-  renderStats()
-  renderUpgrades()
-  await saveGame()
-}
-
-async function buyWeaponUpgrade(u){
-  const c = costOf(u)
-  if(gameState.playerMoney < c) return addNotification("No tienes suficiente dinero.","notEnoughMoney")
-  gameState.playerMoney -= c
-  u.times++
-  if(u.id.startsWith("economic-boost")){
-    gameState.clickMultiplierPercentage += u.effect
-  } else if(u.id.startsWith("military-boost")){
-    gameState.esbirrosMultiplierPercentage += u.effect
-  } else if(u.id.startsWith("social-boost")){
-    gameState.socialArrestReductionPercentage += u.effect;
-  }
-  updatePerSecondStats()
-  renderStats()
-  renderInvestments()
-  renderUpgrades()
-  await saveGame()
-}
-
-function increaseStarsWithResistance(base, rank = 1) {
-  const resistanceEffect = Math.max(MIN_POLICE_RESISTANCE_EFFECT, (1 - gameState.policeResistance))
-  const effective = base * resistanceEffect
-  const controlledCount = Object.values(gameState.countryStatus).filter(st => st.control >= 50).length
-  const totalCount = Object.keys(gameState.countryStatus).length || 1
-  const dominanceFactor = controlledCount / totalCount
-  const adjustedEffective = effective * (1 + dominanceFactor * DOMINANCE_FACTOR_MULTIPLIER)
-
-  let starIncrease = 1
-  if (adjustedEffective >= 10) starIncrease = 3
-  else if (adjustedEffective >= 5) starIncrease = 2
-  if (rank >= 3 && starIncrease > 0) starIncrease += 1
-  if (rank >= 5 && starIncrease > 0) starIncrease += 1
-
-  if(totalCount === 1 && starIncrease > 2) {
-    starIncrease = 2
-  }
-  const newStars = gameState.policeStars + starIncrease
-  recalcPoliceStarsFromValue(newStars)
-}
-
-function attemptRescueMinions(countryIso) {
-  if (gameState.rescueMinionsActive) return
-  gameState.rescueMinionsActive = true
-  const upgrade = militaryInvestments.find(upg => upg.id === "military-boost-6")
-  const baseProbability = upgrade ? upgrade.effect * upgrade.times : 0
-  const arrestedCount = gameState.countryStatus[countryIso].arrestedTotal || 0
-  const tensionFactor = gameState.policeStars / 5
-  const successProbability = Math.max(0, baseProbability - tensionFactor * 0.1)
-
-  if (Math.random() < successProbability) {
-    const rescuedMinions = Math.ceil(arrestedCount * (0.1 + baseProbability))
-    gameState.countryStatus[countryIso].arrestedTotal = Math.max(0, arrestedCount - rescuedMinions)
-    addNotification(`¡Rescate exitoso en ${gameState.countryStatus[countryIso].countryName}! ${rescuedMinions} liberados.`, "rescueSuccess", gameState.countryStatus[countryIso].countryName)
-    createAnimation(detailArrestedElement, -rescuedMinions, "arrested")
-  } else {
-    addNotification(`¡Fallo en el rescate de aliados en ${gameState.countryStatus[countryIso].countryName}!`, "rescueFail", gameState.countryStatus[countryIso].countryName)
-  }
-  gameState.rescueMinionsActive = false
-  renderWorldList()
-  renderStats()
-  saveGame()
-}
-
-function triggerPoliceActions(){
-  if (!gameState.gameActive || !countriesData || Date.now() - gameState.lastPoliceEventCheck < 5000) return
-  gameState.lastPoliceEventCheck = Date.now()
-
-  const baseEventProbability = gameState.policeStars * 0.1
-  if(gameState.policeStars>=3){
-    if(Math.random() < baseEventProbability * 0.7){
-      triggerEconomicBlockade(1)
-    }
-    if(Math.random() < baseEventProbability * 0.6){
-      const dominatedCountries = Object.keys(gameState.countryStatus).filter(i => gameState.countryStatus[i].dominated)
-      if(dominatedCountries.length){
-        triggerHideoutRaid(dominatedCountries, 1)
-      }
-    }
-  }
-  if(gameState.policeStars===5){
-    const dominatedCountries = Object.keys(gameState.countryStatus).filter(i => {
-      const st = gameState.countryStatus[i]
-      return st.dominated && st.control>=100
-    })
-    if(dominatedCountries.length){
-      const rIso = dominatedCountries[Math.floor(Math.random() * dominatedCountries.length)]
-      if(!gameState.reconquestEvent) startReconquestEvent(rIso)
-    }
-  }
-}
-
-let clickTimes = []
-btnMoneyClickElement.addEventListener("click", async e => {
-  if(!gameState.gameActive) return
-  const earn = (gameState.baseMoneyClick + gameState.totalMoneyUpgrades) * (1 + gameState.clickMultiplierPercentage)
-  gameState.playerMoney += earn
-  createAnimation(bannerMoneyElement, earn, "money")
-  renderStats()
-  renderUpgrades()
-  e.target.classList.add("clicked")
-  setTimeout(() => e.target.classList.remove("clicked"), 200)
-  await saveGame()
-
-  const currentTime = Date.now()
-  clickTimes.push(currentTime)
-  clickTimes = clickTimes.filter(time => currentTime - time < 1000)
-  let clickSpeed = clickTimes.length
-  generateMoneyParticles(clickSpeed, btnMoneyClickElement)
-})
-
-function onCountryClick(e){
-  const countryId = e.target.feature.id;
-  document.querySelector('.tab-button[data-tab="world"]').click();
-  if(gameState.countryStatus[countryId] && gameState.countryStatus[countryId].esbirros > 0){
-    showCountryDetail(countryId)
-  } else {
-    document.getElementById("detailCountryName").innerText = "Este país aún no tiene presencia tu banda";
-    document.getElementById("detailPopulation").innerText = "";
-    document.getElementById("detailEsbirros").innerText = "";
-    document.getElementById("detailArrested").innerText = "";
-  }
-  geojsonLayer.eachLayer(layer => {
-    if(layer.feature?.id === countryId){
-      map.fitBounds(layer.getBounds())
-    }
-  });
-  if(window.innerWidth <= 768 && !sidebar.classList.contains("active")){
-    sidebar.classList.add("active")
-    setMenuIcon()
-  }
-}
-
-function refreshGeoStyle(){
-  if(!geojsonLayer) return
-  geojsonLayer.setStyle(f => {
-    const i = f.id
-    const st = gameState.countryStatus[i]
-    if(!st) return { color: "#555", weight: 1, fillColor: "#f0f0f0", fillOpacity: 0.2 }
-    if(st.dominated) return { color:"#555", weight:1, fillColor:"#008000", fillOpacity:0.7 }
-    if((st.arrestedTotal||0) >= (st.popReal||1)) return { color:"#555", weight: 1, fillColor: "#000000", fillOpacity:0.8 }
-    if((st.arrestedTotal||0) > st.esbirros) return { color:"#555", weight:1, fillColor:"#0000FF", fillOpacity:0.4 }
-    if(st.control >= 50 && st.control<100) return { color:"#555", weight:1, fillColor:"#800080", fillOpacity:0.5 }
-    return { color:"#555", weight:1, fillColor:"#FF0000", fillOpacity:(st.control/100)*0.6 + 0.1 }
-  })
-}
-
-function getPopulationFromFeature(iso){
-  return countriesData?.features.find(f => f.id===iso)?.properties?.population || 0
-}
-
-async function saveGame(){
-  if(!gameState.currentUser) return
-  const toSave = { ...gameState }
-  toSave.moneyUpgrades = moneyUpgrades.map(u => ({ times: u.times }))
-  toSave.esbirrosUpgrades = esbirrosUpgrades.map(u => ({ times: u.times }))
-  toSave.policeUpgrades = policeUpgrades.map(u => ({ times: u.times }))
-  toSave.clickInvestments = clickInvestments.map(u => ({ times: u.times }))
-  toSave.militaryInvestments = militaryInvestments.map(u => ({ times: u.times }))
-  toSave.socialInvestments = socialInvestments.map(u => ({ times: u.times }))
-
-  delete toSave.currentUser
-  delete toSave.policeNotification
-  delete toSave.activeIcons
-  delete toSave.reconquestEvent
-  delete toSave.lastHeatDecrease
-
-  try {
-    for(const k in toSave.countryStatus){
-      const st = toSave.countryStatus[k]
-      if(!isFinite(st.esbirros) || isNaN(st.esbirros)){
-        st.esbirros = 0
-      }
-    }
-    await set(ref(database, `users/${gameState.currentUser.uid}/gameState`), toSave)
-  } catch(e){
-    console.error("Error saving game:", e);
-  }
-}
-
-async function loadGame(uid){
-  if(!uid) {
-    return;
-  }
-  try {
-    const s = await get(ref(database, `users/${uid}/gameState`));
-
-    if(!s.exists()) {
-      return;
-    }
-
-    const saved = s.val();
-
-    gameState = { ...defaultGameState, ...saved, currentUser: gameState.currentUser };
-    gameState.policeNotification = null;
-
-    moneyUpgrades.forEach((u,i) => u.times = saved.moneyUpgrades?.[i]?.times || 0);
-    esbirrosUpgrades.forEach((u,i) => u.times = saved.esbirrosUpgrades?.[i]?.times || 0);
-    policeUpgrades.forEach((u,i) => u.times = saved.policeUpgrades?.[i]?.times || 0);
-    clickInvestments.forEach((u,i) => u.times = saved.clickInvestments?.[i]?.times || 0);
-    militaryInvestments.forEach((u,i) => u.times = saved.militaryInvestments?.[i]?.times || 0);
-    socialInvestments.forEach((u,i) => u.times = saved.socialInvestments?.[i]?.times || 0);
-
-    gameState.totalMoneyUpgrades = moneyUpgrades.reduce((acc,u) => acc + (u.effectMoney||0)*u.times,0);
-    gameState.totalMoneyUpgradesSec = moneyUpgrades.reduce((acc,u) => acc + (u.effectMoneySec||0)*u.times,0);
-    gameState.totalEsbirrosUpgrades = esbirrosUpgrades.reduce((acc,u) => acc + (u.effectEsb||0)*u.times,0);
-
-    recalcPoliceStarsFromValue(gameState.policeStars);
-    updatePerSecondStats();
-    renderStats();
-    renderUpgrades();
-    renderInvestments();
-    refreshGeoStyle();
-    startGame();
-    notificationContainer.innerHTML = '';
-
-    if(gameState.firstSession && gameState.startCountry){
-      displayInitialMinion(gameState.startCountry);
-    } else {
-      iconsEnabled = true;
-      moneyIconsEnabled = true;
-      esbirrosIconsEnabled = true;
-      policeIconsEnabled = true;
-      iconMoneyInfo.classList.remove("hidden");
-      iconEsbirrosInfo.classList.remove("hidden");
-      iconPoliceInfo.classList.remove("hidden");
-    }
-    authContainer.classList.add("hidden");
-    statsBanner.classList.remove("hidden");
-
-  } catch (error) {
-    console.error("Error loading game:", error);
-    addNotification("Error al cargar partida.","auth");
-  }
-}
-
-function getNeighbors(i){
-  const f = countriesData.features.find(o => o.id===i)
-  if(!f) return []
-  const arr = []
-  countriesData.features.forEach(ff => {
-    if(ff.id === i) return
-    const b1 = L.geoJSON(f).getBounds()
-    const b2 = L.geoJSON(ff).getBounds()
-    if(b1.intersects(b2)) arr.push(ff.id)
-  })
-  return arr
-}
-
-function expandFromCountry(i){
-  const st = gameState.countryStatus[i]
-  if(!st || st.control < 20) return
-  let prob = BASE_EXPANSION_PROBABILITY * (1 + (st.esbirros / st.popReal)) * gameState.expansionProbabilityMultiplier
-
-  if(st.control >= 20){
-    prob *= 1
-  }
-  if(st.control >= 50){
-    prob *= 3
-  }
-  if(st.control >= 90){
-    prob *= 5
-  }
-  if(st.control === 100) prob = 0.05
-
-  prob = gameState.startingCountryExpansionMultiplier
-  const dominatedCount = Object.keys(gameState.countryStatus).filter(k => gameState.countryStatus[k].dominated || gameState.countryStatus[k].control>=50).length
-  const penaltyFactor = 1 + (Math.max(0, dominatedCount-2) * EXPANSION_DIFFICULTY_FACTOR)
-  prob /= penaltyFactor
-  if(prob < 0.0005) prob = 0.0005
-  if(prob > 0.1) prob = 0.1
-
-  if(Math.random() < prob){
-    const exp = Math.random() < 0.7 ? 1 : 2
-    let possible = getNeighbors(i).filter(x => !gameState.countryStatus[x])
-    possible.sort(() => Math.random() - 0.5)
-
-    const n = Math.min(exp, possible.length)
-    for(let k=0; k<n; k++){
-      const newIso = possible[k]
-      const nf = countriesData.features.find(ff => ff.id===newIso)
-      if(nf){
-        gameState.countryStatus[newIso] = {
-          countryName: nf.properties.name || newIso,
-          popReal: nf.properties.population || 0,
-          control: 0,
-          dominated: false,
-          arrestedTotal: 0,
-          esbirros: 1
-        }
-        addNotification(`¡Te has expandido a ${nf.properties.name || newIso}!`,"expansion")
-        animateExpansion(newIso)
-        renderWorldList()
-      }
-    }
-  }
-}
-
-function animateExpansion(i){
-  if(!geojsonLayer) return
-  geojsonLayer.eachLayer(l => {
-    if(l.feature?.id !== i) return
-    const orig = { color:"#555", weight:1, fillColor:"#FF0000", fillOpacity:0.2 }
-    const anim = { color:"#555", weight:2, fillColor:"#800080", fillOpacity:0.7 }
-    l.setStyle(anim)
-    const b = l.getBounds()
-    const c = b.getCenter()
-    const circle = L.circleMarker(c, { radius:10, color:"white", weight:3, fillOpacity:0 }).addTo(map)
-    let r = 10
-    const interval = setInterval(() => {
-      r += EXPANSION_ANIMATION_CIRCLE_RADIUS_INCREMENT
-      circle.setRadius(r)
-      circle.setStyle({ opacity: Math.max(0, 1 - r/EXPANSION_ANIMATION_CIRCLE_MAX_RADIUS) })
-      if(r >= EXPANSION_ANIMATION_CIRCLE_MAX_RADIUS){
-        clearInterval(interval)
-        map.removeLayer(circle)
-      }
-    }, EXPANSION_ANIMATION_INTERVAL_MS)
-    setTimeout(() => {
-      l.setStyle(orig)
-      refreshGeoStyle()
-    }, ANIMATION_DURATION)
-  })
-}
-
-function renderWorldList(){
-  countryListElement.innerHTML = ""
-  const arr = Object.keys(gameState.countryStatus)
-  arr.forEach(iso => {
-    const st = gameState.countryStatus[iso]
-    const li = document.createElement("li")
-    const icon = st.dominated ? '<i class="fas fa-check-circle country-conquered"></i>' : (st.control>=50 ? '<i class="fas fa-flag country-expanding"></i>' : "")
-    li.innerHTML = `${st.countryName || iso} ${icon}`
-    li.addEventListener("click", () => {
-      document.querySelector('.tab-button[data-tab="world"]').click();
-      if(gameState.countryStatus[iso] && gameState.countryStatus[iso].esbirros > 0){
-        showCountryDetail(iso)
-      } else {
-        document.getElementById("detailCountryName").innerText = "Este país aún no tiene presencia tu banda"
-        document.getElementById("detailPopulation").innerText = ""
-        document.getElementById("detailEsbirros").innerText = ""
-        document.getElementById("detailArrested").innerText = ""
-      }
-      geojsonLayer.eachLayer(ly => {
-        if(ly.feature?.id === iso){
-          map.fitBounds(ly.getBounds())
-        }
-      })
-    })
-    countryListElement.appendChild(li)
-  })
-  if(gameState.currentIso) showCountryDetail(gameState.currentIso)
-}
-
-function showCountryDetail(i){
-  gameState.currentIso = i
-  const st = gameState.countryStatus[i]
-  if(!st) return
-  detailCountryNameElement.innerText = st.countryName || i
-  detailPopulationElement.innerText = formatNumber(st.popReal || 0)
-  detailEsbirrosElement.innerText = formatNumber(st.esbirros || 0)
-  detailArrestedElement.innerText = formatNumber(st.arrestedTotal || 0)
-  refreshGeoStyle()
-  renderStats()
 }
 
 function startGame(){
@@ -1145,12 +631,14 @@ function startGame(){
   }
 }
 
+// Lógica para el spawn de íconos (dinero/esbirros/policía)
 function spawnIcon(iconType, icon, iso){
   if(!iconsEnabled) return
   if(iconType==="money" && !moneyIconsEnabled) return
   if(iconType==="esbirros" && !esbirrosIconsEnabled) return
   if(iconType==="police" && !policeIconsEnabled) return
   if(!iso || !geojsonLayer) return
+
   let tLayer
   geojsonLayer.eachLayer(l => {
     if(l.feature?.id === iso) tLayer = l
@@ -1163,6 +651,7 @@ function spawnIcon(iconType, icon, iso){
   const lngSpan = ne.lng - sw.lng
   const latSpan = ne.lat - sw.lat
   let tries = 50
+
   while(tries>0){
     const rLng = sw.lng + lngSpan*Math.random()
     const rLat = sw.lat + latSpan*Math.random()
@@ -1173,6 +662,7 @@ function spawnIcon(iconType, icon, iso){
       const bLatLng = map.containerPointToLatLng(ibp)
       if(b.contains(bLatLng)){
         mk.on("click", () => {
+          // Distintas lógicas según el tipo
           if (iconType === "money") {
             const mg = gameState.moneyPerSecond * 10;
             generateMoneyNews(
@@ -1238,6 +728,7 @@ function spawnIcon(iconType, icon, iso){
           }
           map.removeLayer(mk);
           activeIcons = activeIcons.filter((m) => m !== mk);
+          SoundManager.playPopup();
         });
         mk.addTo(map)
         activeIcons.push(mk)
@@ -1248,17 +739,22 @@ function spawnIcon(iconType, icon, iso){
   }
 }
 
+// Mantiene spawnRandomIcons para esbirros / money / police
 function spawnRandomIcons(){
   if(!iconsEnabled) return
   if(!gameState.gameActive || !gameState.bandName || !countriesData) return
+
   const cIso = Object.keys(gameState.countryStatus).filter(i => gameState.countryStatus[i].control>=0)
   const now = Date.now()
 
+  // ÍCONO DE DINERO
   if(now - lastMoneySpawn >= MONEY_ICON_SPAWN_INTERVAL && moneyIconsEnabled && cIso.length){
     const rM = cIso[Math.floor(Math.random()*cIso.length)]
     spawnIcon("money", moneyIcon, rM)
     lastMoneySpawn = now
   }
+
+  // ÍCONO DE ESBIRROS
   const dominated = cIso.filter(i => {
     const cs = gameState.countryStatus[i]
     return cs.dominated && cs.control < 100 && esbirrosIconsEnabled && ((cs.esbirros||0) > (cs.arrestedTotal||0))
@@ -1271,6 +767,8 @@ function spawnRandomIcons(){
       lastEsbirrosSpawn = now
     }
   }
+
+  // ÍCONO DE POLICÍA
   if(gameState.policeStars>0 && now - lastPoliceSpawn >= POLICE_ICON_SPAWN_INTERVAL && cIso.length){
     const rP = cIso[Math.floor(Math.random()*cIso.length)]
     const st = gameState.countryStatus[rP]
@@ -1279,6 +777,250 @@ function spawnRandomIcons(){
       lastPoliceSpawn = now
     }
   }
+}
+
+function onCountryClick(e){
+  const countryId = e.target.feature.id;
+  document.querySelector('.tab-button[data-tab="world"]').click();
+  if(gameState.countryStatus[countryId] && gameState.countryStatus[countryId].esbirros > 0){
+    showCountryDetail(countryId)
+  } else {
+    document.getElementById("detailCountryName").innerText = "Este país aún no tiene presencia tu banda";
+    document.getElementById("detailPopulation").innerText = "";
+    document.getElementById("detailEsbirros").innerText = "";
+    document.getElementById("detailArrested").innerText = "";
+  }
+  geojsonLayer.eachLayer(layer => {
+    if(layer.feature?.id === countryId){
+      map.fitBounds(layer.getBounds())
+    }
+  });
+  if(window.innerWidth <= 768 && !sidebar.classList.contains("active")){
+    sidebar.classList.add("active")
+    setMenuIcon()
+  }
+  SoundManager.playButtonClick();
+}
+
+function refreshGeoStyle(){
+  if(!geojsonLayer) return
+  geojsonLayer.setStyle(f => {
+    const i = f.id
+    const st = gameState.countryStatus[i]
+    if(!st) return { color: "#555", weight: 1, fillColor: "#f0f0f0", fillOpacity: 0.2 }
+    if(st.dominated) return { color:"#555", weight:1, fillColor:"#008000", fillOpacity:0.7 }
+    if((st.arrestedTotal||0) >= (st.popReal||1)) return { color:"#555", weight: 1, fillColor: "#000000", fillOpacity:0.8 }
+    if((st.arrestedTotal||0) > st.esbirros) return { color:"#555", weight:1, fillColor:"#0000FF", fillOpacity:0.4 }
+    if(st.control >= 50 && st.control<100) return { color:"#555", weight:1, fillColor:"#800080", fillOpacity:0.5 }
+    return { color:"#555", weight:1, fillColor:"#FF0000", fillOpacity:(st.control/100)*0.6 + 0.1 }
+  })
+}
+
+function getPopulationFromFeature(iso){
+  return countriesData?.features.find(f => f.id===iso)?.properties?.population || 0
+}
+
+async function saveGame(){
+  if(!gameState.currentUser) return
+  const toSave = { ...gameState }
+  toSave.moneyUpgrades = moneyUpgrades.map(u => ({ times: u.times }))
+  toSave.esbirrosUpgrades = esbirrosUpgrades.map(u => ({ times: u.times }))
+  toSave.policeUpgrades = policeUpgrades.map(u => ({ times: u.times }))
+  toSave.clickInvestments = clickInvestments.map(u => ({ times: u.times }))
+  toSave.militaryInvestments = militaryInvestments.map(u => ({ times: u.times }))
+  toSave.socialInvestments = socialInvestments.map(u => ({ times: u.times }))
+
+  delete toSave.currentUser
+  delete toSave.policeNotification
+  delete toSave.activeIcons
+  delete toSave.reconquestEvent
+  delete toSave.lastHeatDecrease
+
+  try {
+    for(const k in toSave.countryStatus){
+      const st = toSave.countryStatus[k]
+      if(!isFinite(st.esbirros) || isNaN(st.esbirros)){
+        st.esbirros = 0
+      }
+    }
+    await set(ref(database, `users/${gameState.currentUser.uid}/gameState`), toSave)
+  } catch(e){
+    console.error("Error saving game:", e);
+  }
+}
+
+async function loadGame(uid){
+  if(!uid) {
+    return;
+  }
+  try {
+    const s = await get(ref(database, `users/${uid}/gameState`));
+    if(!s.exists()) {
+      return;
+    }
+
+    const saved = s.val();
+    gameState = { ...defaultGameState, ...saved, currentUser: gameState.currentUser };
+    gameState.policeNotification = null;
+
+    moneyUpgrades.forEach((u,i) => u.times = saved.moneyUpgrades?.[i]?.times || 0);
+    esbirrosUpgrades.forEach((u,i) => u.times = saved.esbirrosUpgrades?.[i]?.times || 0);
+    policeUpgrades.forEach((u,i) => u.times = saved.policeUpgrades?.[i]?.times || 0);
+    clickInvestments.forEach((u,i) => u.times = saved.clickInvestments?.[i]?.times || 0);
+    militaryInvestments.forEach((u,i) => u.times = saved.militaryInvestments?.[i]?.times || 0);
+    socialInvestments.forEach((u,i) => u.times = saved.socialInvestments?.[i]?.times || 0);
+
+    gameState.totalMoneyUpgrades = moneyUpgrades.reduce((acc,u) => acc + (u.effectMoney||0)*u.times,0);
+    gameState.totalMoneyUpgradesSec = moneyUpgrades.reduce((acc,u) => acc + (u.effectMoneySec||0)*u.times,0);
+    gameState.totalEsbirrosUpgrades = esbirrosUpgrades.reduce((acc,u) => acc + (u.effectEsb||0)*u.times,0);
+
+    recalcPoliceStarsFromValue(gameState.policeStars);
+    updatePerSecondStats();
+    renderStats();
+    renderUpgrades();
+    renderInvestments();
+    refreshGeoStyle();
+    startGame();
+    notificationContainer.innerHTML = '';
+
+    // Si es la primera vez, muestra esbirro inicial
+    if(gameState.firstSession && gameState.startCountry){
+      displayInitialMinion(gameState.startCountry);
+    } else {
+      iconsEnabled = true;
+      moneyIconsEnabled = true;
+      esbirrosIconsEnabled = true;
+      policeIconsEnabled = true;
+      iconMoneyInfo.classList.remove("hidden");
+      iconEsbirrosInfo.classList.remove("hidden");
+      iconPoliceInfo.classList.remove("hidden");
+    }
+    authContainer.classList.add("hidden");
+    statsBanner.classList.remove("hidden");
+
+  } catch (error) {
+    console.error("Error loading game:", error);
+    addNotification("Error al cargar partida.","auth");
+  }
+}
+
+function expandFromCountry(i){
+  const st = gameState.countryStatus[i]
+  if(!st || st.control < 20) return
+
+  let prob = BASE_EXPANSION_PROBABILITY * (1 + (st.esbirros / st.popReal)) * gameState.expansionProbabilityMultiplier
+
+  if(st.control >= 20) prob *= 1
+  if(st.control >= 50) prob *= 3
+  if(st.control >= 90) prob *= 5
+  if(st.control === 100) prob = 0.05
+
+  prob = gameState.startingCountryExpansionMultiplier
+  const dominatedCount = Object.keys(gameState.countryStatus).filter(
+    k => gameState.countryStatus[k].dominated || gameState.countryStatus[k].control>=50
+  ).length
+  const penaltyFactor = 1 + (Math.max(0, dominatedCount-2) * EXPANSION_DIFFICULTY_FACTOR)
+  prob /= penaltyFactor
+  if(prob < 0.0005) prob = 0.0005
+  if(prob > 0.1) prob = 0.1
+
+  if(Math.random() < prob){
+    const exp = Math.random() < 0.7 ? 1 : 2
+    let possible = getNeighbors(i).filter(x => !gameState.countryStatus[x])
+    possible.sort(() => Math.random() - 0.5)
+
+    const n = Math.min(exp, possible.length)
+    for(let k=0; k<n; k++){
+      const newIso = possible[k]
+      const nf = countriesData.features.find(ff => ff.id===newIso)
+      if(nf){
+        gameState.countryStatus[newIso] = {
+          countryName: nf.properties.name || newIso,
+          popReal: nf.properties.population || 0,
+          control: 0,
+          dominated: false,
+          arrestedTotal: 0,
+          esbirros: 1
+        }
+        addNotification(`¡Te has expandido a ${nf.properties.name || newIso}!`,"expansion")
+        animateExpansion(newIso)
+        renderWorldList()
+        SoundManager.playExpansion();
+      }
+    }
+  }
+}
+
+function animateExpansion(i){
+  if(!geojsonLayer) return
+  geojsonLayer.eachLayer(l => {
+    if(l.feature?.id !== i) return
+    const orig = { color:"#555", weight:1, fillColor:"#FF0000", fillOpacity:0.2 }
+    const anim = { color:"#555", weight:2, fillColor:"#800080", fillOpacity:0.7 }
+    l.setStyle(anim)
+    const b = l.getBounds()
+    const c = b.getCenter()
+    const circle = L.circleMarker(c, { radius:10, color:"white", weight:3, fillOpacity:0 }).addTo(map)
+    let r = 10
+    const interval = setInterval(() => {
+      r += EXPANSION_ANIMATION_CIRCLE_RADIUS_INCREMENT
+      circle.setRadius(r)
+      circle.setStyle({ opacity: Math.max(0, 1 - r/EXPANSION_ANIMATION_CIRCLE_MAX_RADIUS) })
+      if(r >= EXPANSION_ANIMATION_CIRCLE_MAX_RADIUS){
+        clearInterval(interval)
+        map.removeLayer(circle)
+      }
+    }, EXPANSION_ANIMATION_INTERVAL_MS)
+    setTimeout(() => {
+      l.setStyle(orig)
+      refreshGeoStyle()
+    }, ANIMATION_DURATION)
+  })
+}
+
+function renderWorldList(){
+  countryListElement.innerHTML = ""
+  const arr = Object.keys(gameState.countryStatus)
+  arr.forEach(iso => {
+    const st = gameState.countryStatus[iso]
+    const li = document.createElement("li")
+    const icon = st.dominated
+      ? '<i class="fas fa-check-circle country-conquered"></i>'
+      : (st.control>=50 ? '<i class="fas fa-flag country-expanding"></i>' : "")
+
+    li.innerHTML = `${st.countryName || iso} ${icon}`
+    li.addEventListener("click", () => {
+      document.querySelector('.tab-button[data-tab="world"]').click();
+      if(gameState.countryStatus[iso] && gameState.countryStatus[iso].esbirros > 0){
+        showCountryDetail(iso)
+      } else {
+        document.getElementById("detailCountryName").innerText = "Este país aún no tiene presencia tu banda"
+        document.getElementById("detailPopulation").innerText = ""
+        document.getElementById("detailEsbirros").innerText = ""
+        document.getElementById("detailArrested").innerText = ""
+      }
+      geojsonLayer.eachLayer(ly => {
+        if(ly.feature?.id === iso){
+          map.fitBounds(ly.getBounds())
+        }
+      })
+      SoundManager.playButtonClick();
+    })
+    countryListElement.appendChild(li)
+  })
+  if(gameState.currentIso) showCountryDetail(gameState.currentIso)
+}
+
+function showCountryDetail(i){
+  gameState.currentIso = i
+  const st = gameState.countryStatus[i]
+  if(!st) return
+  detailCountryNameElement.innerText = st.countryName || i
+  detailPopulationElement.innerText = formatNumber(st.popReal || 0)
+  detailEsbirrosElement.innerText = formatNumber(st.esbirros || 0)
+  detailArrestedElement.innerText = formatNumber(st.arrestedTotal || 0)
+  refreshGeoStyle()
+  renderStats()
 }
 
 function checkGameOver(){
@@ -1306,16 +1048,19 @@ function checkGameOver(){
   return false
 }
 
+// El "game loop" principal de 200ms
 setInterval(() => {
   if(!gameState.gameActive || !gameState.bandName || !countriesData) return
-  if(gameState.reconquestEvent){
-    handleReconquestEvent()
-  }
-  triggerPoliceActions()
+
+  // Eliminamos la lógica de reconquista y triggers de policía
+  // if(gameState.reconquestEvent) { handleReconquestEvent() }
+  // triggerPoliceActions()
 
   let newArrestsGlobal = 0
   let totalWorldPopulation = 0
   let totalEsbirrosInGame = 0
+
+  // Recuento
   for(const iso in gameState.countryStatus){
     const st = gameState.countryStatus[iso]
     const oldE = st.esbirros || 0
@@ -1352,12 +1097,14 @@ setInterval(() => {
     st.arrestedTotal = Math.min((st.arrestedTotal || 0) + arrests, pop)
     st.control = pop>0 ? Math.min(100, (st.esbirros/pop)*100) : 0
 
+    // Multiplicador del país inicial
     if(iso === gameState.startCountry && st.control>=50){
       gameState.startingCountryExpansionMultiplier = 2
     } else if(iso === gameState.startCountry){
       gameState.startingCountryExpansionMultiplier = 1
     }
 
+    // Cuando llegue a 100% control, se considera "dominado"
     if(st.control >= 100 && !st.dominated){
       st.dominated = true
       addNotification("¡Has dominado","countryConquered", st.countryName)
@@ -1365,6 +1112,7 @@ setInterval(() => {
     }
     totalEsbirrosInGame += (st.esbirros || 0)
   }
+
   gameState.totalArrested += newArrestsGlobal
   gameState.lastArrestIncrement = newArrestsGlobal
   gameState.arrestedPerSecond = (gameState.lastArrestIncrement / 5) * (1 - gameState.socialArrestReductionPercentage);
@@ -1372,6 +1120,10 @@ setInterval(() => {
   gameState.playerMoney += gameState.moneyPerSecond
 
   if(checkGameOver()){
+    if(!gameState.gameOverSoundPlayed){
+      gameState.gameOverSoundPlayed = true;
+      SoundManager.playGameOver();
+    }
     gameState.gameActive = false
     stopNewsGeneration()
     saveGame()
@@ -1379,6 +1131,10 @@ setInterval(() => {
   }
   if(totalEsbirrosInGame <= 0){
     addNotification("¡GAME OVER! Todos tus esbirros han sido arrestados.","gameResult")
+    if(!gameState.gameOverSoundPlayed){
+      gameState.gameOverSoundPlayed = true;
+      SoundManager.playGameOver();
+    }
     gameState.gameActive = false
     stopNewsGeneration()
     saveGame()
@@ -1390,25 +1146,12 @@ setInterval(() => {
   renderStats()
   renderWorldList()
   Object.keys(gameState.countryStatus).forEach(expandFromCountry)
-  spawnRandomIcons()
+  spawnRandomIcons()  // <<--- Esto hace que aparezcan los íconos dinero/esbirros/police
   renderStats()
   saveGame()
 }, 200)
 
-function generateNewsUpdate(){}
-
-function startNewsGeneration(){
-  if(!newsInterval){
-    newsInterval = setInterval(generateNewsUpdate, 300000)
-  }
-}
-function stopNewsGeneration(){
-  if(newsInterval){
-    clearInterval(newsInterval)
-    newsInterval = null
-  }
-}
-
+// Mantiene showNewsPopup / closeNewsPopup
 function showNewsPopup(newsContent, newsTitle="Última hora", newsType="default"){
   newsPopupElement.className = "modal-content"
   newsPopupElement.classList.add("newsPopup")
@@ -1456,8 +1199,7 @@ function showNewsPopup(newsContent, newsTitle="Última hora", newsType="default"
   const newsBanner = document.createElement('div');
   newsBanner.classList.add('news-banner');
   newsBanner.textContent = newsTitle;
-  // Forzar texto en blanco para el banner
-  newsBanner.style.color = "#fff"; 
+  newsBanner.style.color = "#fff";
   newsBanner.style.backgroundColor = bannerColor;
   newsTitleHeader.appendChild(newsBanner);
   newsHeader.appendChild(newsTitleHeader);
@@ -1480,12 +1222,14 @@ function showNewsPopup(newsContent, newsTitle="Última hora", newsType="default"
   newsPopupElement.classList.remove("hidden")
   newsOverlay.classList.remove("hidden")
   stopNewsGeneration()
+  SoundManager.playPopup();
 }
 
 function closeNewsPopup(){
   newsPopupElement.classList.add("hidden")
   newsOverlay.classList.add("hidden")
   startNewsGeneration()
+  SoundManager.playButtonClick();
 }
 closeNewsButton.addEventListener("click", closeNewsPopup)
 newsOverlay.addEventListener("click", closeNewsPopup)
@@ -1494,6 +1238,7 @@ leaderCards.forEach(c => {
   c.addEventListener("click", () => {
     leaderCards.forEach(x => x.classList.remove("selected"))
     c.classList.add("selected")
+    SoundManager.playButtonClick();
   })
 })
 
@@ -1519,6 +1264,7 @@ tabButtons.forEach(btn => {
         appContainer.classList.add(`tab-content-${tabContent.id.split('.')[0]}-active`);
       }
     });
+    SoundManager.playButtonClick();
   });
 });
 
@@ -1527,11 +1273,13 @@ gameTitles.forEach(tl => {
     tl.parentElement.classList.toggle("collapsed")
     tl.querySelector("i.fas")?.classList.toggle("fa-chevron-down")
     tl.querySelector("i.fas")?.classList.toggle("fa-chevron-up")
+    SoundManager.playButtonClick();
   })
 })
 
 countryProgressModalCloseButton.addEventListener("click", () => {
   countryProgressModal.classList.remove("active")
+  SoundManager.playButtonClick();
 })
 
 function setMenuIcon(){
@@ -1563,8 +1311,10 @@ window.addEventListener("orientationchange", adjustMenuToggleButton)
 menuToggleButton.addEventListener("click", () => {
   sidebar.classList.toggle("active")
   setMenuIcon()
+  SoundManager.playButtonClick();
 })
 
+// Carga el geojson y setea la capa
 fetch("./data/countriesWithPopulation.geo.json")
   .then(r => r.json())
   .then(d => {
