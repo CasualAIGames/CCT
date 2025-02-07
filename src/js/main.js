@@ -7,6 +7,9 @@ import { generateMoneyParticles } from "./particles.js"
 // Import SoundManager
 import SoundManager from "./sounds.js"
 
+SoundManager.init(); // Initialize SoundManager immediately after import
+SoundManager.startBackgroundMusic(); // Start background music immediately after init
+
 const mapElement = document.getElementById("map")
 const notificationContainer = document.getElementById("notificationContainer")
 const statsBanner = document.getElementById("statsBanner")
@@ -893,6 +896,10 @@ btnMoneyClickElement.addEventListener("click", async e => {
   clickTimes = clickTimes.filter(time => currentTime - time < 1000)
   let clickSpeed = clickTimes.length
   generateMoneyParticles(clickSpeed, btnMoneyClickElement)
+  if (SoundManager.audioCtx.state === 'suspended') {
+    SoundManager.audioCtx.resume(); // Resume audio context on first click
+    SoundManager.startBackgroundMusic(); // Ensure music starts if it was suspended
+  }
 })
 
 function onCountryClick(e){
@@ -1624,5 +1631,4 @@ fetch("./data/countriesWithPopulation.geo.json")
     })
     initializeAuth(handleAuthStateChanged)
     renderInvestments()
-    SoundManager.init() // Initialize SoundManager after DOM is ready
   })
