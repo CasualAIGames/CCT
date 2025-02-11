@@ -978,82 +978,47 @@ body.sidebar-active #notificationContainer {
   transform: translate(-50%, -50%);
   animation: fadeInNews 0.4s ease-out forwards;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 #newsPopup.hidden {
   display: none !important;
 }
 
-#newsPopup.welcome-popup {
-  border: 2px solid #4CAF50;
+/* Estilos base para todos los tipos de noticias */
+#newsPopup .news-header {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 2px solid #333;
 }
 
-#newsPopup.news-money {
-  border-color: #00ff00;
+#newsPopup .news-icon {
+  width: 40px;
+  height: 40px;
+  margin-right: 15px;
+  object-fit: contain;
+  filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.7));
 }
-#newsPopup.news-esbirros {
-  border-color: #ff0000;
-}
-#newsPopup.news-police {
-  border-color: #0000ff;
+
+#newsPopup .news-title-header {
+  flex-grow: 1;
 }
 
 #newsPopup .news-banner {
-  background-color: #FFD700;
-  color: #fff !important;
-  text-align: center;
-  padding: 10px 15px;
-  font-weight: bold;
+  display: inline-block;
+  padding: 6px 12px;
+  font-size: 1.3em;
   font-family: 'Pricedown', sans-serif;
-  border-radius: 10px 10px 0 0;
+  color: #fff !important;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-  font-size: 1.2em;
+  border-radius: 8px;
 }
 
-#newsPopup.welcome-popup .news-banner {
-  background-color: #4CAF50;
-  color: #fff;
-}
-#newsPopup.news-money .news-banner {
-  background-color: #00ff00;
-  color: #1a1a1a;
-}
-#newsPopup.news-esbirros .news-banner {
-  background-color: #ff0000;
-  color: #fff;
-}
-#newsPopup.news-police .news-banner {
-  background-color: #0000ff;
-  color: #fff;
+#newsPopup .news-content {
+  padding: 15px;
 }
 
-#newsPopup #popupNewsTitle {
-  margin-top: 0;
-  margin-bottom: 0px;
-  text-align: center;
-  font-size: 1em;
-  color: #fff;
-  font-family: 'Roboto', sans-serif;
-  font-weight: bold;
-  letter-spacing: 0.5px;
-  padding: 0 15px;
-}
-
-#newsPopup #popupNewsDescription {
-  margin: 15px;
-  font-size: 0.95em;
-  line-height: 1.5;
-  text-align: left;
-  color: #ddd;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.news-headline {
+#newsPopup .news-headline {
   font-size: 1.2em;
   font-weight: bold;
   margin-bottom: 10px;
@@ -1061,52 +1026,135 @@ body.sidebar-active #notificationContainer {
   text-align: center;
 }
 
-.news-body {
+#newsPopup .news-body {
   font-size: 1em;
   color: #ccc;
   margin-bottom: 15px;
+  line-height: 1.5;
 }
 
-.news-content {
-  position: relative;
-  padding: 0;
+/* Estilos específicos por tipo */
+#newsPopup.welcome-popup {
+  border-color: #4CAF50;
+}
+
+#newsPopup.welcome-popup .news-banner {
+  background-color: #4CAF50;
+}
+
+#newsPopup.news-money {
+  border-color: #00ff00;
+}
+
+#newsPopup.news-money .news-banner {
+  background-color: #00ff00;
+  color: #1a1a1a !important;
+}
+
+#newsPopup.news-esbirros {
+  border-color: #ff0000;
+}
+
+#newsPopup.news-esbirros .news-banner {
+  background-color: #ff0000;
+}
+
+#newsPopup.news-police {
+  border-color: #0000ff;
+}
+
+#newsPopup.news-police .news-banner {
+  background-color: #0000ff;
+}
+
+/* Estilos para la bonificación */
+.bonus-reward-container {
+  margin-top: 15px;
+  padding: 15px;
   display: flex;
   flex-direction: column;
-  height: 100%;
-}
-
-#newsOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 4500;
-  display: none;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
-}
-
-#newsOverlay.hidden {
-  display: none !important;
-}
-
-#leaderNameInput {
-  padding: 5px;
-  width: calc(100% - 10px);
-  font-size: 0.7em;
-  color: #fff;
-  background-color: #333;
+  align-items: center;
+  background-color: #2a2a2a;
   border: none;
-  border-radius: 3px;
+  border-radius: 10px;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+  width: 100%;
   box-sizing: border-box;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-#leaderNameInput:focus {
-  outline: none;
+.bonus-reward-icon {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 10px;
+  object-fit: contain;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+.bonus-reward-number {
+  margin-bottom: 12px;
+  font-family: 'Pricedown', sans-serif;
+  font-size: 1.2em;
+  text-shadow: 1px 1px 3px #000;
   color: #fff;
-  background-color: #444;
-  box-shadow: 0 0 5px #FFD700;
+  letter-spacing: 1px;
+}
+
+.claim-bonus-button {
+  padding: 10px 20px;
+  width: 80%;
+  font-size: 1em;
+  font-family: 'Pricedown', sans-serif;
+  color: #fff;
+  background: linear-gradient(145deg, #4CAF50, #388E3C);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.2s ease;
+  box-shadow: 0 6px 0 #388E3C, 2px 2px 5px rgba(0, 0, 0, 0.5);
+  outline: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.claim-bonus-button:hover {
+  background: linear-gradient(145deg, #66BB6A, #43A047);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 0 #388E3C, 2px 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+.claim-bonus-button:active {
+  background: #388E3C;
+  transform: translateY(1px);
+  box-shadow: 0 2px 0 #388E3C, 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.claim-bonus-button:disabled {
+  background: #555;
+  color: #999;
+  box-shadow: none;
+  cursor: default;
+  transform: none;
+}
+
+.close-news-btn {
+  font-family: "Pricedown", sans-serif;
+  font-size: 24px;
+  color: #fff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s ease;
+  z-index: 1;
+}
+
+.close-news-btn:hover {
+  color: #ff0;
 }
 
 .player-card {
@@ -1518,114 +1566,4 @@ body.sidebar-active .notification {
   #btnMoneyClick {
     width: 120px;
   }
-}
-
-.bonus-reward-container {
-  margin-top: 15px;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: #2a2a2a;
-  border: none;
-  border-radius: 10px;
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
-}
-
-.bonus-reward-icon {
-  width: 50px;
-  height: 50px;
-  margin-bottom: 10px;
-  object-fit: contain;
-  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.6));
-}
-
-.bonus-reward-number {
-  margin-bottom: 12px;
-  font-family: 'Pricedown', sans-serif;
-  font-size: 1.2em;
-  text-shadow: 1px 1px 3px #000;
-  color: #fff;
-  letter-spacing: 1px;
-}
-
-.claim-bonus-button {
-  padding: 10px 20px;
-  font-size: 1em;
-  font-family: 'Pricedown', sans-serif;
-  color: #fff;
-  background: linear-gradient(145deg, #4CAF50, #388E3C);
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.2s ease;
-  box-shadow: 0 6px 0 #388E3C, 2px 2px 5px rgba(0, 0, 0, 0.5);
-  outline: none;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-
-.claim-bonus-button:hover {
-  background: linear-gradient(145deg, #66BB6A, #43A047);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 0 #388E3C, 2px 4px 6px rgba(0, 0, 0, 0.5);
-}
-
-.claim-bonus-button:active {
-  background: #388E3C;
-  transform: translateY(1px);
-  box-shadow: 0 2px 0 #388E3C, 1px 1px 3px rgba(0, 0, 0, 0.5);
-}
-
-.claim-bonus-button:disabled {
-  background: #555;
-  color: #999;
-  box-shadow: none;
-  cursor: default;
-  transform: none;
-}
-
-#newsPopup .news-header {
-  display: flex;
-  align-items: center;
-  padding: 10px 15px;
-  border-bottom: 2px solid #333;
-}
-
-#newsPopup .news-icon {
-  width: 40px;
-  height: 40px;
-  margin-right: 15px;
-  object-fit: contain;
-  filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.7));
-}
-
-#newsPopup .news-title-header {
-  flex-grow: 1;
-  text-align: left;
-}
-
-#newsPopup .news-title-header .news-banner {
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 1.3em;
-  text-align: left;
-  margin-bottom: 5px;
-}
-
-#newsPopup .close-news-btn:hover {
-  color: rgb(255, 94, 0);
-}
-
-#newsPopup.news-money .news-icon,
-#newsPopup.news-esbirros .news-icon,
-#newsPopup.news-police .news-icon {
-  filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.7))
-          brightness(1.2)
-          saturate(1.5);
-}
-
-#newsPopup .bonus-reward-container {
-  background-color: #333;
 }

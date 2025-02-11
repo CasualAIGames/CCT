@@ -7,6 +7,9 @@ import { generateMoneyParticles } from "./particles.js"
 // Import SoundManager
 import SoundManager from "./sounds.js"
 
+// Importar Turf.js desde CDN
+const turf = window.turf;
+
 SoundManager.init(); // Initialize SoundManager immediately after import
 
 const mapElement = document.getElementById("map")
@@ -137,6 +140,7 @@ const defaultGameState = {
   esbirrosPerTickMultiplier: 1,
   policeNotification: null,
   currentIso: null,
+  gameStartTime: 0,
   moneyUpgrades: moneyUpgrades.map(u => ({ times: 0 })),
   esbirrosUpgrades: esbirrosUpgrades.map(u => ({ times: 0 })),
   policeUpgrades: policeUpgrades.map(u => ({ times: 0 })),
@@ -559,45 +563,47 @@ function updatePerSecondStats(){
 
 function displayInitialMinion(iso){
   if(!iso || !geojsonLayer){
-    startNewsGeneration()
-    return
+    startNewsGeneration();
+    return;
   }
-  let tLayer
+  let tLayer;
   geojsonLayer.eachLayer(l => {
-    if(l.feature?.id === iso) tLayer = l
-  })
+    if(l.feature?.id === iso) tLayer = l;
+  });
   if(!tLayer){
-    startNewsGeneration()
-    return
+    startNewsGeneration();
+    return;
   }
-  const b = tLayer.getBounds()
-  map.fitBounds(b)
-  const c = b.getCenter()
-  esbirroMarker = L.marker(c, { icon: welcomeIcon }).addTo(map)
-  esbirroMarker._icon.classList.add("marker-appear-animation")
+  const b = tLayer.getBounds();
+  map.fitBounds(b);
+  const c = b.getCenter();
+  esbirroMarker = L.marker(c, { icon: welcomeIcon }).addTo(map);
+  esbirroMarker._icon.classList.add("marker-appear-animation");
+  
   esbirroMarker.on("click", () => {
     if(esbirroMarker && esbirroMarker._icon){
-      esbirroMarker._icon.classList.add("marker-disappear-animation")
+      esbirroMarker._icon.classList.add("marker-disappear-animation");
       setTimeout(() => {
         if(map.hasLayer(esbirroMarker)){
-          map.removeLayer(esbirroMarker)
-          const w = generateWelcomeMessage(gameState)
-          showNewsPopup(w.message, w.title, "welcome")
-          gameState.firstSession = false
-          iconsEnabled = true
-          moneyIconsEnabled = true
-          esbirrosIconsEnabled = true
-          policeIconsEnabled = true
-          iconMoneyInfo.classList.remove("hidden")
-          iconEsbirrosInfo.classList.remove("hidden")
-          iconPoliceInfo.classList.remove("hidden")
-          saveGame()
-          startNewsGeneration()
-          SoundManager.playPopup() // Play sound on welcome popup
+          map.removeLayer(esbirroMarker);
+          const w = generateWelcomeMessage(gameState);
+          showNewsPopup(w.message, w.title, "welcome");
+          gameState.firstSession = false;
+          gameState.gameStartTime = Date.now();
+          iconsEnabled = true;
+          moneyIconsEnabled = true;
+          esbirrosIconsEnabled = true;
+          policeIconsEnabled = true;
+          iconMoneyInfo.classList.remove("hidden");
+          iconEsbirrosInfo.classList.remove("hidden");
+          iconPoliceInfo.classList.remove("hidden");
+          saveGame();
+          startNewsGeneration();
+          SoundManager.playPopup();
         }
-      }, ICON_ANIMATION_DURATION)
+      }, ICON_ANIMATION_DURATION);
     }
-  })
+  });
 }
 
 function costOf(u){
@@ -804,50 +810,78 @@ async function buyWeaponUpgrade(u){
   SoundManager.playUpgradePurchase() // Play sound on upgrade purchase
 }
 
-function increaseStarsWithResistance(base, rank = 1) {
-  const resistanceEffect = Math.max(MIN_POLICE_RESISTANCE_EFFECT, (1 - gameState.policeResistance))
-  const effective = base * resistanceEffect
-  const controlledCount = Object.values(gameState.countryStatus).filter(st => st.control >= 50).length
-  const totalCount = Object.keys(gameState.countryStatus).length || 1
-  const dominanceFactor = controlledCount / totalCount
-  const adjustedEffective = effective * (1 + dominanceFactor * DOMINANCE_FACTOR_MULTIPLIER)
-
-  let starIncrease = 1
-  if (adjustedEffective >= 10) starIncrease = 3
-  else if (adjustedEffective >= 5) starIncrease = 2
-  if (rank >= 3 && starIncrease > 0) starIncrease += 1
-  if (rank >= 5 && starIncrease > 0) starIncrease += 1
-
-  if(totalCount === 1 && starIncrease > 2) {
-    starIncrease = 2
-  }
-  const newStars = gameState.policeStars + starIncrease
-  recalcPoliceStarsFromValue(newStars)
-  SoundManager.playPolice() // Play sound when police stars increase
-}
-
 function triggerPoliceActions(){
-  if (!gameState.gameActive || !countriesData || Date.now() - gameState.lastPoliceEventCheck < 5000) return
-  gameState.lastPoliceEventCheck = Date.now()
+  if (!gameState.gameActive || !countriesData || Date.now() - gameState.lastPoliceEventCheck < 5000) return;
+  gameState.lastPoliceEventCheck = Date.now();
 
   // Calcular probabilidad base de obtener estrellas basada en dominación
-  const dominatedCountries = Object.keys(gameState.countryStatus).filter(i => gameState.countryStatus[i].dominated)
-  const totalCountries = Object.keys(gameState.countryStatus).length || 1
-  const dominationRatio = dominatedCountries.length / totalCountries
+  const dominatedCountries = Object.keys(gameState.countryStatus).filter(i => gameState.countryStatus[i].dominated);
+  const totalCountries = Object.keys(gameState.countryStatus).length || 1;
+  const dominationRatio = dominatedCountries.length / totalCountries;
 
-  // Aumentar probabilidad base según dominación
-  const baseStarProbability = 0.1 + (dominationRatio * 0.2)
+  // Reducir la probabilidad base significativamente
+  const baseStarProbability = 0.02 + (dominationRatio * 0.05);
 
   // Aplicar resistencia policial (nunca llega a 0)
-  const effectiveStarProbability = Math.max(0.05, baseStarProbability * (1 - gameState.policeResistance))
+  const effectiveStarProbability = Math.max(0.01, baseStarProbability * (1 - gameState.policeResistance));
 
-  if(Math.random() < effectiveStarProbability) {
-    const currentStars = gameState.policeStars
-    const maxIncrease = Math.min(5 - currentStars, Math.ceil(dominationRatio * 3))
-    if(maxIncrease > 0) {
-      recalcPoliceStarsFromValue(currentStars + Math.max(1, maxIncrease))
+  // Añadir un retraso mínimo entre aumentos de estrellas
+  const timeSinceLastIncrease = Date.now() - (gameState.lastStarIncrease || 0);
+  const minTimeBetweenIncreases = 60000; // 1 minuto mínimo entre aumentos
+
+  if(timeSinceLastIncrease >= minTimeBetweenIncreases && Math.random() < effectiveStarProbability) {
+    const currentStars = gameState.policeStars;
+    
+    // Limitar el máximo de estrellas según la dominación
+    let maxPossibleStars;
+    if (dominationRatio < 0.2) maxPossibleStars = 2;
+    else if (dominationRatio < 0.4) maxPossibleStars = 3;
+    else if (dominationRatio < 0.6) maxPossibleStars = 4;
+    else maxPossibleStars = 5;
+
+    // Solo incrementar si no hemos alcanzado el máximo para el nivel actual de dominación
+    if (currentStars < maxPossibleStars) {
+      const maxIncrease = Math.min(maxPossibleStars - currentStars, 1); // Solo incrementar de 1 en 1
+      if(maxIncrease > 0) {
+        recalcPoliceStarsFromValue(currentStars + 1);
+        gameState.lastStarIncrease = Date.now();
+      }
     }
   }
+}
+
+function increaseStarsWithResistance(base, rank = 1) {
+  const resistanceEffect = Math.max(MIN_POLICE_RESISTANCE_EFFECT, (1 - gameState.policeResistance));
+  const effective = base * resistanceEffect;
+  const controlledCount = Object.values(gameState.countryStatus).filter(st => st.control >= 50).length;
+  const totalCount = Object.keys(gameState.countryStatus).length || 1;
+  const dominanceFactor = controlledCount / totalCount;
+  const adjustedEffective = effective * (1 + dominanceFactor * DOMINANCE_FACTOR_MULTIPLIER);
+
+  // Reducir la cantidad de estrellas que se añaden
+  let starIncrease = 1;
+  if (adjustedEffective >= 15) starIncrease = 2;
+  else if (adjustedEffective >= 10) starIncrease = 1;
+  
+  // Limitar el aumento según el rango
+  if (rank >= 4) starIncrease = Math.min(starIncrease + 1, 2);
+  if (rank >= 5) starIncrease = Math.min(starIncrease + 1, 3);
+
+  // Limitar en el primer país
+  if(totalCount === 1) {
+    starIncrease = Math.min(starIncrease, 1);
+  }
+
+  // Añadir un retraso mínimo entre aumentos
+  const timeSinceLastIncrease = Date.now() - (gameState.lastStarIncrease || 0);
+  if (timeSinceLastIncrease < 30000) { // 30 segundos mínimo entre aumentos
+    starIncrease = Math.min(starIncrease, 1);
+  }
+
+  const newStars = gameState.policeStars + starIncrease;
+  recalcPoliceStarsFromValue(newStars);
+  gameState.lastStarIncrease = Date.now();
+  SoundManager.playPolice();
 }
 
 let clickTimes = []
@@ -1149,84 +1183,101 @@ function startGame(){
   }
 }
 
-function spawnIcon(iconType, icon, iso){
-  if(!iconsEnabled) return
-  if(iconType==="money" && !moneyIconsEnabled) return
-  if(iconType==="esbirros" && !esbirrosIconsEnabled) return
-  if(iconType==="police" && !policeIconsEnabled) return
-  if(!iso || !geojsonLayer) return
-  let tLayer
-  geojsonLayer.eachLayer(l => {
-    if(l.feature?.id === iso) tLayer = l
-  })
-  if(!tLayer) return
+function spawnIcon(iconType, icon, iso) {
+  if(!iconsEnabled) return;
+  if(iconType==="money" && !moneyIconsEnabled) return;
+  if(iconType==="esbirros" && !esbirrosIconsEnabled) return;
+  if(iconType==="police" && !policeIconsEnabled) return;
+  if(!iso || !geojsonLayer) return;
 
-  const b = tLayer.getBounds()
-  const sw = b.getSouthWest()
-  const ne = b.getNorthEast()
-  const lngSpan = ne.lng - sw.lng
-  const latSpan = ne.lat - sw.lat
-  let tries = 50
-  while(tries>0){
-    const rLng = sw.lng + lngSpan*Math.random()
-    const rLat = sw.lat + latSpan*Math.random()
-    const p = L.latLng([rLat, rLng])
-    if(b.contains(p)){
-      const mk = L.marker(p, { icon })
-      const ibp = map.latLngToContainerPoint(p).add([0, icon.options.iconAnchor[1] - icon.options.popupAnchor[1]])
-      const bLatLng = map.containerPointToLatLng(ibp)
-      if(b.contains(bLatLng)){
-        mk.on("click", () => {
-          if (iconType === "money") {
-            const mg = gameState.moneyPerSecond * 10;
+  let tLayer;
+  geojsonLayer.eachLayer(l => {
+    if(l.feature?.id === iso) tLayer = l;
+  });
+  if(!tLayer) return;
+
+  const bounds = tLayer.getBounds();
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+  const lngSpan = ne.lng - sw.lng;
+  const latSpan = ne.lat - sw.lat;
+  let tries = 50;
+
+  while(tries > 0) {
+    const rLng = sw.lng + lngSpan * Math.random();
+    const rLat = sw.lat + latSpan * Math.random();
+    const point = L.latLng([rLat, rLng]);
+    
+    // Crear un punto GeoJSON para verificar
+    const pt = turf.point([point.lng, point.lat]);
+    const isInside = turf.booleanPointInPolygon(pt, tLayer.feature);
+
+    if(isInside) {
+      const marker = L.marker(point, { icon });
+      
+      // Verificar que el pointer (base del icono) también está dentro
+      const pointerPoint = map.latLngToContainerPoint(point);
+      const pointerLatLng = map.containerPointToLatLng(
+        pointerPoint.add([0, icon.options.iconAnchor[1]])
+      );
+      const pointerPt = turf.point([pointerLatLng.lng, pointerLatLng.lat]);
+      
+      if(turf.booleanPointInPolygon(pointerPt, tLayer.feature)) {
+        marker.on("click", () => {
+          if(iconType === "money") {
+            const moneyGain = gameState.moneyPerSecond * 10;
             generateMoneyNews(
               { bandName: gameState.bandName, leaderName: gameState.leaderName },
               gameState.countryStatus[iso]?.countryName || iso
             ).then((newsContent) => {
               showNewsPopup(newsContent, "¡Hallazgo inesperado!", "money");
-              animateBonusRewardInNews(mg, "money", 2000, () => {
-                gameState.playerMoney += mg;
+              animateBonusRewardInNews(moneyGain, "money", 2000, () => {
+                gameState.playerMoney += moneyGain;
                 renderStats();
                 saveGame();
-                createAnimation(bannerMoneyElement, mg, "money");
-                SoundManager.playMoneyEarned() // Play sound on money icon click reward
+                createAnimation(bannerMoneyElement, moneyGain, "money");
+                SoundManager.playMoneyEarned();
               });
             });
-          } else if (iconType === "esbirros") {
+          } else if(iconType === "esbirros") {
             const st = gameState.countryStatus[iso];
-            if (st) {
-              if (st.control === 100) {
-                map.removeLayer(mk);
-                activeIcons = activeIcons.filter((m) => m !== mk);
+            if(st) {
+              const maxEsbirros = st.popReal - st.arrestedTotal;
+              if(maxEsbirros <= 0 || st.control === 100) {
+                map.removeLayer(marker);
+                activeIcons = activeIcons.filter(m => m !== marker);
                 return;
               }
-              let maxEsbirros = st.popReal - st.arrestedTotal;
-              if (maxEsbirros < 0) maxEsbirros = 0;
+
               let currentEsbirros = st.esbirros || 0;
-              if (currentEsbirros >= maxEsbirros) {
+              if(currentEsbirros >= maxEsbirros) {
+                map.removeLayer(marker);
+                activeIcons = activeIcons.filter(m => m !== marker);
                 return;
               }
-              let eG = Math.floor(gameState.esbirrosPerSecond * 100);
+
+              let esbirrosGain = Math.floor(gameState.esbirrosPerSecond * 100);
               const canAdd = Math.max(0, maxEsbirros - currentEsbirros);
-              if (eG > canAdd) eG = canAdd;
-              if (eG > 0) {
+              if(esbirrosGain > canAdd) esbirrosGain = canAdd;
+              
+              if(esbirrosGain > 0) {
                 generateEsbirrosNews(
                   { bandName: gameState.bandName, leaderName: gameState.leaderName },
                   st.countryName || iso
                 ).then((newsContent) => {
                   showNewsPopup(newsContent, "¡Reclutamiento sorpresa!", "esbirros");
-                  animateBonusRewardInNews(eG, "esbirros", 2000, () => {
-                    st.esbirros = (st.esbirros || 0) + eG;
+                  animateBonusRewardInNews(esbirrosGain, "esbirros", 2000, () => {
+                    st.esbirros = (st.esbirros || 0) + esbirrosGain;
                     renderStats();
                     renderWorldList();
                     saveGame();
-                    createAnimation(bannerEsbirrosElement, eG, "esbirros");
+                    createAnimation(bannerEsbirrosElement, esbirrosGain, "esbirros");
                   });
                 });
               }
             }
-          } else if (iconType === "police") {
-            if (gameState.policeStars > 0) {
+          } else if(iconType === "police") {
+            if(gameState.policeStars > 0) {
               generatePoliceNews(
                 { bandName: gameState.bandName, leaderName: gameState.leaderName },
                 gameState.countryStatus[iso]?.countryName || iso
@@ -1237,52 +1288,93 @@ function spawnIcon(iconType, icon, iso){
                   renderStats();
                   saveGame();
                   createAnimation(bannerMoneyElement, -1, "police");
-                  SoundManager.playPolice() // Play sound on police icon click reward (reduction)
+                  SoundManager.playPolice();
                 });
               });
             }
           }
-          map.removeLayer(mk);
-          activeIcons = activeIcons.filter((m) => m !== mk);
+          map.removeLayer(marker);
+          activeIcons = activeIcons.filter(m => m !== marker);
         });
-        mk.addTo(map)
-        activeIcons.push(mk)
-        return
+
+        marker.addTo(map);
+        activeIcons.push(marker);
+        return;
       }
     }
-    tries--
+    tries--;
   }
 }
 
 function spawnRandomIcons(){
-  if(!iconsEnabled) return
-  if(!gameState.gameActive || !gameState.bandName || !countriesData) return
-  const cIso = Object.keys(gameState.countryStatus).filter(i => gameState.countryStatus[i].control>=0)
-  const now = Date.now()
+  if(!iconsEnabled || !gameState.gameActive || !gameState.bandName || !countriesData) return;
 
-  if(now - lastMoneySpawn >= MONEY_ICON_SPAWN_INTERVAL && moneyIconsEnabled && cIso.length){
-    const rM = cIso[Math.floor(Math.random()*cIso.length)]
-    spawnIcon("money", moneyIcon, rM)
-    lastMoneySpawn = now
-  }
-  const dominated = cIso.filter(i => {
-    const cs = gameState.countryStatus[i]
-    return cs.dominated && cs.control < 100 && esbirrosIconsEnabled && ((cs.esbirros||0) > (cs.arrestedTotal||0))
-  })
-  if(now - lastEsbirrosSpawn >= ESBIRROS_ICON_SPAWN_INTERVAL && esbirrosIconsEnabled){
-    const countriesWithEsbirros = dominated.filter(iso => gameState.countryStatus[iso].esbirros > 0)
-    if(countriesWithEsbirros.length){
-      const rE = countriesWithEsbirros[Math.floor(Math.random()*countriesWithEsbirros.length)]
-      spawnIcon("esbirros", esbirrosIcon, rE)
-      lastEsbirrosSpawn = now
+  // Solo permitir iconos si se ha leído el mensaje de bienvenida
+  if(gameState.firstSession) return;
+
+  const cIso = Object.keys(gameState.countryStatus).filter(i => {
+    const cs = gameState.countryStatus[i];
+    return cs && cs.esbirros > 0; // Solo países con al menos un esbirro
+  });
+  if(cIso.length === 0) return;
+
+  const now = Date.now();
+  const isInitialPhase = Date.now() - gameState.gameStartTime < 60000; // 1 minuto inicial
+
+  // Intervalos más cortos al inicio
+  const moneyInterval = isInitialPhase ? 5000 : MONEY_ICON_SPAWN_INTERVAL;
+  const esbirrosInterval = isInitialPhase ? 7000 : ESBIRROS_ICON_SPAWN_INTERVAL;
+  const policeInterval = isInitialPhase ? 10000 : POLICE_ICON_SPAWN_INTERVAL;
+
+  // Iconos de dinero
+  if(moneyIconsEnabled && now - lastMoneySpawn >= moneyInterval) {
+    const availableCountries = cIso.filter(i => {
+      const cs = gameState.countryStatus[i];
+      // Mayor probabilidad en países dominados
+      return cs && cs.esbirros > 0 && (Math.random() < (cs.control === 100 ? 0.4 : 0.2));
+    });
+    
+    if(availableCountries.length > 0) {
+      const rM = availableCountries[Math.floor(Math.random() * availableCountries.length)];
+      spawnIcon("money", moneyIcon, rM);
+      lastMoneySpawn = now;
     }
   }
-  if(gameState.policeStars>0 && now - lastPoliceSpawn >= POLICE_ICON_SPAWN_INTERVAL && cIso.length){
-    const rP = cIso[Math.floor(Math.random()*cIso.length)]
-    const st = gameState.countryStatus[rP]
-    if(!st || (st.arrestedTotal||0) <= (st.esbirros||0)){
-      spawnIcon("police", policeIcon, rP)
-      lastPoliceSpawn = now
+
+  // Iconos de esbirros
+  if(esbirrosIconsEnabled && now - lastEsbirrosSpawn >= esbirrosInterval) {
+    const availableForEsbirros = cIso.filter(i => {
+      const cs = gameState.countryStatus[i];
+      // Solo en países donde queda población por reclutar
+      const maxEsbirros = cs.popReal - cs.arrestedTotal;
+      return cs && cs.esbirros > 0 && 
+             maxEsbirros > 0 && 
+             cs.esbirros < maxEsbirros;
+    });
+    
+    if(availableForEsbirros.length > 0) {
+      const rE = availableForEsbirros[Math.floor(Math.random() * availableForEsbirros.length)];
+      spawnIcon("esbirros", esbirrosIcon, rE);
+      lastEsbirrosSpawn = now;
+    }
+  }
+
+  // Iconos de policía
+  if(policeIconsEnabled && now - lastPoliceSpawn >= policeInterval) {
+    const availableForPolice = cIso.filter(i => {
+      const cs = gameState.countryStatus[i];
+      // Aparece en países con más del 51% de control policial o aleatoriamente si hay estrellas
+      const policeControl = (cs.arrestedTotal / cs.popReal) * 100;
+      return cs && cs.esbirros > 0 && (
+        policeControl > 51 || 
+        (gameState.policeStars > 0 && cs.control < 100 && Math.random() < 0.3)
+      );
+    });
+    
+    if(availableForPolice.length > 0) {
+      const rP = availableForPolice[Math.floor(Math.random() * availableForPolice.length)];
+      spawnIcon("police", policeIcon, rP);
+      lastPoliceSpawn = now;
     }
   }
 }
@@ -1412,96 +1504,96 @@ function stopNewsGeneration(){
   }
 }
 
-function showNewsPopup(newsContent, newsTitle="Última hora", newsType="default"){
-  newsPopupElement.className = "modal-content"
-  newsPopupElement.classList.add("newsPopup")
-  newsPopupElement.classList.toggle("welcome-popup", newsType==="welcome")
-  newsPopupElement.classList.toggle(`news-${newsType}`, newsType!=="welcome" && newsType!=="default")
-
-  let bannerColor = "#FFD700";
-  let titleColor = "#FFD700";
-  let iconSrc = "assets/images/icononoticia.webp"
-  if(newsType==="money"){
-      bannerColor = "#00ff00";
-      titleColor = "#00ff00";
-      iconSrc = "assets/images/iconodinero.webp"
-  } else if(newsType==="esbirros"){
-      bannerColor = "#ff0000";
-      titleColor = "#ff0000";
-      iconSrc = "assets/images/iconoesbirro.webp"
-  } else if(newsType==="police"){
-      bannerColor = "#0000ff";
-      titleColor = "#0000ff";
-      iconSrc = "assets/images/iconopolicia.webp"
-  } else if(newsType==="welcome"){
-      bannerColor = "#4CAF50";
-      titleColor = "#4CAF50";
-      iconSrc = "assets/images/iconoinfo.webp"
-  } else {
-      bannerColor = "#FFD700";
-      titleColor = "#FFD700";
-      iconSrc = "assets/images/icononoticia.webp"
-  }
-  newsPopupElement.style.borderColor = bannerColor;
-
-  newsPopupTitle.innerHTML = '';
-
-  const newsHeader = document.createElement('div');
-  newsHeader.classList.add('news-header');
-
-  const newsIcon = document.createElement('img');
-  newsIcon.classList.add('news-icon');
-  newsIcon.src = iconSrc;
-  newsHeader.appendChild(newsIcon);
-
-  const newsTitleHeader = document.createElement('div');
-  newsTitleHeader.classList.add('news-title-header');
-  const newsBanner = document.createElement('div');
-  newsBanner.classList.add('news-banner');
-  newsBanner.textContent = newsTitle;
-  // Forzar texto en blanco para el banner
-  newsBanner.style.color = "#fff";
-  newsBanner.style.backgroundColor = bannerColor;
-  newsTitleHeader.appendChild(newsBanner);
-  newsHeader.appendChild(newsTitleHeader);
-  newsPopupTitle.appendChild(newsHeader);
-
+function showNewsPopup(newsContent, newsTitle="Última hora", newsType="default") {
+  // Limpiar clases anteriores y asegurar que el popup esté visible
+  newsPopupElement.style.display = "block";
+  newsPopupElement.className = "";
+  newsPopupElement.classList.add("newsPopup");
+  
+  // Añadir clase según el tipo
   if (newsType === "welcome") {
-    newsPopupDescription.innerHTML = newsContent;
-  } else {
-    let news;
+    newsPopupElement.classList.add("welcome-popup");
+  } else if (["money", "esbirros", "police"].includes(newsType)) {
+    newsPopupElement.classList.add(`news-${newsType}`);
+  }
+
+  // Configurar icono según el tipo
+  const iconSrc = {
+    money: "assets/images/iconodinero.webp",
+    esbirros: "assets/images/iconoesbirro.webp",
+    police: "assets/images/iconopolicia.webp",
+    welcome: "assets/images/iconoinfo.webp",
+    default: "assets/images/icononoticia.webp"
+  }[newsType] || "assets/images/icononoticia.webp";
+
+  // Crear estructura del popup
+  newsPopupElement.innerHTML = `
+    <div class="news-header">
+      <img src="${iconSrc}" alt="Icono de noticia" class="news-icon">
+      <div class="news-title-header">
+        <div class="news-banner">${newsTitle}</div>
+      </div>
+      <button class="close-news-btn">×</button>
+    </div>
+    <div class="news-content">
+      ${newsType === "welcome" ? newsContent : ""}
+    </div>
+  `;
+
+  // Si no es mensaje de bienvenida, procesar el contenido de la noticia
+  if (newsType !== "welcome") {
     try {
-      news = JSON.parse(newsContent);
-      newsPopupDescription.innerHTML = `<h4 class="news-headline">${news.headline}</h4><p class="news-body">${news.body}</p><div id="bonusRewardContainer"></div>`;
+      const news = JSON.parse(newsContent);
+      const newsContentDiv = newsPopupElement.querySelector(".news-content");
+      newsContentDiv.innerHTML = `
+        <h4 class="news-headline">${news.headline}</h4>
+        <p class="news-body">${news.body}</p>
+        <div id="bonusRewardContainer" class="bonus-reward-container"></div>
+      `;
     } catch (e) {
-      console.error("Error parsing news JSON:", e);
-      console.log("Raw news content:", newsContent);
-      newsPopupDescription.innerHTML = `<h4 class="news-headline">Error al leer noticia</h4><p class="news-body">No se pudo procesar la noticia debido a un error.</p>`;
+      console.error("Error al procesar la noticia:", e);
+      const newsContentDiv = newsPopupElement.querySelector(".news-content");
+      newsContentDiv.innerHTML = `
+        <h4 class="news-headline">Error al procesar la noticia</h4>
+        <p class="news-body">No se pudo mostrar la noticia correctamente.</p>
+        <div id="bonusRewardContainer" class="bonus-reward-container"></div>
+      `;
     }
   }
 
-  newsPopupElement.classList.remove("hidden")
-  newsOverlay.classList.remove("hidden")
-  stopNewsGeneration()
-  SoundManager.playPopup() // Play sound on news popup
+  // Mostrar el popup y el overlay
+  newsPopupElement.classList.remove("hidden");
+  newsOverlay.classList.remove("hidden");
+  newsOverlay.style.display = "block";
+  
+  // Detener la generación de noticias mientras se muestra el popup
+  stopNewsGeneration();
+  
+  // Reproducir sonido
+  SoundManager.playPopup();
+
+  // Configurar el nuevo botón de cerrar
+  const closeBtn = newsPopupElement.querySelector(".close-news-btn");
+  closeBtn.addEventListener("click", closeNewsPopup);
 }
 
 function closeNewsPopup(){
-  newsPopupElement.classList.add("hidden")
-  newsOverlay.classList.add("hidden")
-  startNewsGeneration()
-  SoundManager.playButtonClick() // Play sound on close news popup
+  newsPopupElement.classList.add("hidden");
+  newsOverlay.classList.add("hidden");
+  newsOverlay.style.display = "none";
+  startNewsGeneration();
+  SoundManager.playButtonClick(); // Play sound on close news popup
 }
-closeNewsButton.addEventListener("click", closeNewsPopup)
-newsOverlay.addEventListener("click", closeNewsPopup)
+closeNewsButton.addEventListener("click", closeNewsPopup);
+newsOverlay.addEventListener("click", closeNewsPopup);
 
 leaderCards.forEach(c => {
   c.addEventListener("click", () => {
-    leaderCards.forEach(x => x.classList.remove("selected"))
-    c.classList.add("selected")
-    SoundManager.playButtonClick() // Play sound on leader card click
-  })
-})
+    leaderCards.forEach(x => x.classList.remove("selected"));
+    c.classList.add("selected");
+    SoundManager.playButtonClick(); // Play sound on leader card click
+  });
+});
 
 tabButtons.forEach(btn => {
   btn.addEventListener("click", e => {
@@ -1525,73 +1617,73 @@ tabButtons.forEach(btn => {
         appContainer.classList.add(`tab-content-${tabContent.id.split('.')[0]}-active`);
       }
     });
-    SoundManager.playButtonClick() // Play sound on tab button click
+    SoundManager.playButtonClick(); // Play sound on tab button click
   });
 });
 
 gameTitles.forEach(tl => {
   tl.addEventListener("click", () => {
-    tl.parentElement.classList.toggle("collapsed")
-    tl.querySelector("i.fas")?.classList.toggle("fa-chevron-down")
-    tl.querySelector("i.fas")?.classList.toggle("fa-chevron-up")
-    SoundManager.playButtonClick() // Play sound on game title click
-  })
-})
+    tl.parentElement.classList.toggle("collapsed");
+    tl.querySelector("i.fas")?.classList.toggle("fa-chevron-down");
+    tl.querySelector("i.fas")?.classList.toggle("fa-chevron-up");
+    SoundManager.playButtonClick(); // Play sound on game title click
+  });
+});
 
 countryProgressModalCloseButton.addEventListener("click", () => {
-  countryProgressModal.classList.remove("active")
-  SoundManager.playButtonClick() // Play sound on country progress modal close
-})
+  countryProgressModal.classList.remove("active");
+  SoundManager.playButtonClick(); // Play sound on country progress modal close
+});
 
 function setMenuIcon(){
-  const ic = menuToggleButton.querySelector("i")
-  const portr = window.innerWidth<=768 && window.innerHeight>window.innerWidth
-  const active = sidebar.classList.contains("active")
+  const ic = menuToggleButton.querySelector("i");
+  const portr = window.innerWidth<=768 && window.innerHeight>window.innerWidth;
+  const active = sidebar.classList.contains("active");
   if(portr){
-    ic.className = `fas fa-chevron-${active?"down":"up"}`
+    ic.className = `fas fa-chevron-${active?"down":"up"}`;
   } else {
-    ic.className = `fas fa-chevron-${active?"right":"left"}`
+    ic.className = `fas fa-chevron-${active?"right":"left"}`;
   }
 }
 
 function adjustMenuToggleButton(){
-  const p = window.innerWidth<=768 && window.innerHeight>window.innerWidth
-  sidebar.classList.toggle("portrait", p)
+  const p = window.innerWidth<=768 && window.innerHeight>window.innerWidth;
+  sidebar.classList.toggle("portrait", p);
   Object.assign(menuToggleButton.style,
     p
     ? { top:"auto", bottom:"20px", left:"50%", right:"auto", transform:"translateX(-50%)" }
     : { bottom:"auto", top:"50%", right:"0", left:"auto", transform:"translateY(-50%)" }
-  )
-  setMenuIcon()
+  );
+  setMenuIcon();
 }
 
-window.addEventListener("load", adjustMenuToggleButton)
-window.addEventListener("resize", adjustMenuToggleButton)
-window.addEventListener("orientationchange", adjustMenuToggleButton)
+window.addEventListener("load", adjustMenuToggleButton);
+window.addEventListener("resize", adjustMenuToggleButton);
+window.addEventListener("orientationchange", adjustMenuToggleButton);
 
 menuToggleButton.addEventListener("click", () => {
-  sidebar.classList.toggle("active")
-  setMenuIcon()
-  SoundManager.playButtonClick() // Play sound on menu toggle button click
-})
+  sidebar.classList.toggle("active");
+  setMenuIcon();
+  SoundManager.playButtonClick(); // Play sound on menu toggle button click
+});
 
 fetch("./data/countriesWithPopulation.geo.json")
   .then(r => r.json())
   .then(d => {
-    countriesData = d
+    countriesData = d;
     geojsonLayer = L.geoJSON(d, {
       style: () => ({ color:"#555", weight:1, fillColor:"#f0f0f0", fillOpacity:0.2 }),
       onEachFeature: (f,l) => l.on({
         click: onCountryClick
       })
-    }).addTo(map)
+    }).addTo(map);
 
     d.features.forEach(f => {
-      const opt = document.createElement("option")
-      opt.value = f.id
-      opt.textContent = f.properties.name
-      startCountrySelect.appendChild(opt)
-    })
-    initializeAuth(handleAuthStateChanged)
-    renderInvestments()
-  })
+      const opt = document.createElement("option");
+      opt.value = f.id;
+      opt.textContent = f.properties.name;
+      startCountrySelect.appendChild(opt);
+    });
+    initializeAuth(handleAuthStateChanged);
+    renderInvestments();
+  });
