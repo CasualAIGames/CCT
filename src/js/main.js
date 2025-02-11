@@ -826,55 +826,26 @@ function increaseStarsWithResistance(base, rank = 1) {
   SoundManager.playPolice() // Play sound when police stars increase
 }
 
-function attemptRescueMinions(countryIso) {
-  if (gameState.rescueMinionsActive) return
-  gameState.rescueMinionsActive = true
-  const upgrade = militaryInvestments.find(upg => upg.id === "military-boost-6")
-  const baseProbability = upgrade ? upgrade.effect * upgrade.times : 0
-  const arrestedCount = gameState.countryStatus[countryIso].arrestedTotal || 0
-  const tensionFactor = gameState.policeStars / 5
-  const successProbability = Math.max(0, baseProbability - tensionFactor * 0.1)
-
-  if (Math.random() < successProbability) {
-    const rescuedMinions = Math.ceil(arrestedCount * (0.1 + baseProbability))
-    gameState.countryStatus[countryIso].arrestedTotal = Math.max(0, arrestedCount - rescuedMinions)
-    addNotification(`¡Rescate exitoso en ${gameState.countryStatus[countryIso].countryName}! ${rescuedMinions} liberados.`, "rescueSuccess", gameState.countryStatus[countryIso].countryName)
-    createAnimation(detailArrestedElement, -rescuedMinions, "arrested")
-    SoundManager.playRescueSuccess() // Play sound on rescue success
-  } else {
-    addNotification(`¡Fallo en el rescate de aliados en ${gameState.countryStatus[countryIso].countryName}!`, "rescueFail", gameState.countryStatus[countryIso].countryName)
-    SoundManager.playRescueFail() // Play sound on rescue fail
-  }
-  gameState.rescueMinionsActive = false
-  renderWorldList()
-  renderStats()
-  saveGame()
-}
-
 function triggerPoliceActions(){
   if (!gameState.gameActive || !countriesData || Date.now() - gameState.lastPoliceEventCheck < 5000) return
   gameState.lastPoliceEventCheck = Date.now()
 
-  const baseEventProbability = gameState.policeStars * 0.1
-  if(gameState.policeStars>=3){
-    if(Math.random() < baseEventProbability * 0.7){
-      triggerEconomicBlockade(1)
-    }
-    if(Math.random() < baseEventProbability * 0.6){
-      const dominatedCountries = Object.keys(gameState.countryStatus).filter(i => gameState.countryStatus[i].dominated)
-      if(dominatedCountries.length){
-        triggerHideoutRaid(dominatedCountries, 1)
-      }
-    }
-  }
-  if(gameState.policeStars===5){
-    const dominatedCountries = Object.keys(gameState.countryStatus).filter(i => {
-      const st = gameState.countryStatus[i]
-      return st.dominated && st.control>=100
-    })
-    if(dominatedCountries.length){
-      const rIso = dominatedCountries[Math.floor(Math.random() * dominatedCountries.length)]
-      if(!gameState.reconquestEvent) startReconquestEvent(rIso)
+  // Calcular probabilidad base de obtener estrellas basada en dominación
+  const dominatedCountries = Object.keys(gameState.countryStatus).filter(i => gameState.countryStatus[i].dominated)
+  const totalCountries = Object.keys(gameState.countryStatus).length || 1
+  const dominationRatio = dominatedCountries.length / totalCountries
+
+  // Aumentar probabilidad base según dominación
+  const baseStarProbability = 0.1 + (dominationRatio * 0.2)
+
+  // Aplicar resistencia policial (nunca llega a 0)
+  const effectiveStarProbability = Math.max(0.05, baseStarProbability * (1 - gameState.policeResistance))
+
+  if(Math.random() < effectiveStarProbability) {
+    const currentStars = gameState.policeStars
+    const maxIncrease = Math.min(5 - currentStars, Math.ceil(dominationRatio * 3))
+    if(maxIncrease > 0) {
+      recalcPoliceStarsFromValue(currentStars + Math.max(1, maxIncrease))
     }
   }
 }
@@ -957,8 +928,6 @@ async function saveGame(){
   delete toSave.currentUser
   delete toSave.policeNotification
   delete toSave.activeIcons
-  delete toSave.reconquestEvent
-  delete toSave.lastHeatDecrease
 
   try {
     for(const k in toSave.countryStatus){
@@ -1347,9 +1316,7 @@ function checkGameOver(){
 
 setInterval(() => {
   if(!gameState.gameActive || !gameState.bandName || !countriesData) return
-  if(gameState.reconquestEvent){
-    handleReconquestEvent()
-  }
+
   triggerPoliceActions()
 
   let newArrestsGlobal = 0
@@ -1361,21 +1328,21 @@ setInterval(() => {
     const eGain = (gameState.totalEsbirrosUpgrades * gameState.esbirrosPerTickMultiplier * (1 + gameState.esbirrosMultiplierPercentage)) / 5
     const dominatedCount = Object.keys(gameState.countryStatus).filter(k => gameState.countryStatus[k].dominated).length
 
+    // Ajustar tasa de arrestos según estrellas y resistencia
     let arrestRate = 0.01 * Math.max(0, gameState.policeStars - gameState.policeResistance)
     if(gameState.policeStars >= 3) arrestRate *= 1.5
-    if(gameState.policeStars >= 5) arrestRate *= 2.5
+    if(gameState.policeStars >= 5) arrestRate *= 2.0
 
+    // Ajustar según control del país
     if(st.control < 20){
-      arrestRate *= 0.05
+      arrestRate *= 0.1
     } else if(st.control < 50){
-      arrestRate *= 0.25
+      arrestRate *= 0.3
     } else if(st.control < 80){
-      arrestRate *= 0.6
-    } else {
-      arrestRate *= 0.8
+      arrestRate *= 0.7
     }
 
-    let arrests = Math.floor(oldE * arrestRate * (1 + dominatedCount * ARRESTS_COUNTRY_INCREASE))
+    let arrests = Math.floor(oldE * arrestRate * (1 + dominatedCount * 0.1))
     let newEsb = oldE + eGain - arrests
 
     const pop = st.popReal || 0
@@ -1391,16 +1358,10 @@ setInterval(() => {
     st.arrestedTotal = Math.min((st.arrestedTotal || 0) + arrests, pop)
     st.control = pop>0 ? Math.min(100, (st.esbirros/pop)*100) : 0
 
-    if(iso === gameState.startCountry && st.control>=50){
-      gameState.startingCountryExpansionMultiplier = 2
-    } else if(iso === gameState.startCountry){
-      gameState.startingCountryExpansionMultiplier = 1
-    }
-
     if(st.control >= 100 && !st.dominated){
       st.dominated = true
       addNotification("¡Has dominado","countryConquered", st.countryName)
-      increaseStarsWithResistance(BASE_TENSION_EXPANSION)
+      increaseStarsWithResistance(15) // Aumentar estrellas al dominar un país
     }
     totalEsbirrosInGame += (st.esbirros || 0)
   }

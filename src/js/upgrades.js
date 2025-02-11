@@ -4,7 +4,7 @@ export const moneyUpgrades = [
     name: "Compraventa de chatarra",
     desc: "Convierte chatarra en pasta.",
     baseCost: 50,
-    effectMoneySec: 2,
+    effectMoneySec: 254654232,
     rank: 1,
     times: 0,
     image: "assets/images/chatarra.webp"
@@ -221,7 +221,7 @@ export const policeUpgrades = [
     desc: "Compra jueces y cambia las reglas.",
     baseCost: 800,
     effectStarsReduction: 1,
-    effectPoliceResistance: 0.15,
+    effectPoliceResistance: 0.10,
     rank: 2,
     times: 0,
     image: "assets/images/police-influencia-judicial.webp"
@@ -231,7 +231,8 @@ export const policeUpgrades = [
     name: "Campaña de Desinformación",
     desc: "Crea noticias falsas para desorientar.",
     baseCost: 2000,
-    effectStarsReduction: 2,
+    effectStarsReduction: 1,
+    effectPoliceResistance: 0.15,
     rank: 3,
     times: 0,
     image: "assets/images/police-desinformacion.webp"
@@ -241,7 +242,7 @@ export const policeUpgrades = [
     name: "Infiltración Policial",
     desc: "Infiltra la comisaría y obtén información.",
     baseCost: 5000,
-    effectPoliceResistance: 0.25,
+    effectPoliceResistance: 0.20,
     rank: 4,
     times: 0,
     image: "assets/images/police-infiltracion.webp"
@@ -251,7 +252,7 @@ export const policeUpgrades = [
     name: "Pacto con Comisarios",
     desc: "Crea pactos y gana favores.",
     baseCost: 12000,
-    effectStarsReduction: 2,
+    effectStarsReduction: 1,
     effectPoliceResistance: 0.15,
     rank: 5,
     times: 0,
@@ -262,8 +263,8 @@ export const policeUpgrades = [
     name: "Manipulación de Pruebas",
     desc: "Desaparece evidencias y desvía la culpa.",
     baseCost: 30000,
-    effectStarsReduction: 3,
-    effectPoliceResistance: 0.05,
+    effectStarsReduction: 1,
+    effectPoliceResistance: 0.10,
     rank: 6,
     times: 0,
     image: "assets/images/police-manipulacion-pruebas.webp"
