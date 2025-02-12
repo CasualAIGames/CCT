@@ -23,24 +23,52 @@
     <div id="sidebar">
       <h2 class="game-title main-title">Click & Conquer Tycoon</h2>
       <div class="player-card">
-        <img id="leaderImage" src="" alt="Imagen del Líder" class="leader-image">
-        <div class="player-info">
-          <div class="band-name"><span id="bandInfoBand"></span></div>
-          <div class="leader-name"><span id="bandInfoLeader"></span></div>
-          <div class="country"><img src="assets/images/earth.webp" alt="Icono de Mapamundi" class="country-icon"><span id="bandInfoCountry"></span></div>
-          <div id="playerStars" class="police">
-            <img src="assets/images/policia.webp" alt="Icono de Policía" class="police-icon">
-              <span class="star"></span>
-              <span class="star"></span>
-              <span class="star"></span>
-              <span class="star"></span>
-              <span class="star"></span>
-            </span>
-          </div>
-        </div>
         <button id="playerSettingsBtn" class="player-settings-btn">
           <i class="fas fa-cog"></i>
         </button>
+        <div class="player-card-inner">
+          <div class="player-card-front">
+            <img id="leaderImage" src="" alt="Imagen del Líder" class="leader-image">
+            <div class="player-info">
+              <div class="band-name"><span id="bandInfoBand"></span></div>
+              <div class="leader-name"><span id="bandInfoLeader"></span></div>
+              <div class="country"><img src="assets/images/earth.webp" alt="Icono de Mapamundi" class="country-icon"><span id="bandInfoCountry"></span></div>
+              <div id="playerStars" class="police">
+                <img src="assets/images/policia.webp" alt="Icono de Policía" class="police-icon">
+                <span class="star"></span>
+                <span class="star"></span>
+                <span class="star"></span>
+                <span class="star"></span>
+                <span class="star"></span>
+              </div>
+            </div>
+          </div>
+          <div class="player-card-back">
+            <div class="settings-section">
+              <h3>Sonido</h3>
+              <div class="volume-control">
+                <label>Música de Fondo</label>
+                <input type="range" id="bgMusicVolume" min="0" max="100" value="50">
+              </div>
+              <div class="volume-control">
+                <label>Efectos de Sonido</label>
+                <input type="range" id="sfxVolume" min="0" max="100" value="50">
+              </div>
+            </div>
+            <div class="settings-section">
+              <h3>Cuenta</h3>
+              <button id="newGameBtn" class="settings-button">
+                <i class="fas fa-play"></i> Nueva Partida
+              </button>
+              <button id="logoutBtn" class="settings-button">
+                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+              </button>
+              <button id="privacyPolicyBtn" class="settings-button">
+                <i class="fas fa-shield-alt"></i> Política de Privacidad
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="tab-buttons">

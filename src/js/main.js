@@ -1668,7 +1668,61 @@ function hidePopup(popup) {
 
 /* Event Listeners para el menú de ajustes */
 playerSettingsBtn.addEventListener("click", () => {
-  showPopup(settingsPopup);
+  const playerCard = playerSettingsBtn.closest('.player-card');
+  playerCard.classList.toggle('flipped');
+  SoundManager.playButtonClick();
+});
+
+// Función para voltear la tarjeta y mostrar un popup
+function flipAndShowPopup(popup) {
+  const playerCard = document.querySelector('.player-card');
+  playerCard.classList.remove('flipped');
+  setTimeout(() => {
+    showPopup(popup);
+  }, 400); // Esperar a que termine la animación de volteo
+}
+
+newGameBtn.addEventListener("click", () => {
+  flipAndShowPopup(newGamePopup);
+  
+  // Rellenar el formulario con los datos actuales
+  newGameBandName.value = gameState.bandName;
+  newGameLeaderName.value = gameState.leaderName;
+  
+  // Rellenar la lista de países
+  newGameStartCountry.innerHTML = '<option value="">-- Elige País --</option>';
+  countriesData.features.forEach(f => {
+    const opt = document.createElement("option");
+    opt.value = f.id;
+    opt.textContent = f.properties.name;
+    newGameStartCountry.appendChild(opt);
+  });
+  newGameStartCountry.value = gameState.currentIso;
+  
+  // Seleccionar la imagen de líder actual
+  const leaderCards = newGameLeaderList.querySelectorAll(".leader-card");
+  leaderCards.forEach(card => {
+    const img = card.querySelector(".leader-card-image");
+    if (img.src === gameState.leaderImage) {
+      card.classList.add("selected");
+    } else {
+      card.classList.remove("selected");
+    }
+  });
+});
+
+privacyPolicyBtn.addEventListener("click", () => {
+  flipAndShowPopup(privacyPolicyPopup);
+});
+
+// Cerrar la tarjeta volteada al hacer clic fuera de ella
+document.addEventListener('click', (e) => {
+  const playerCard = document.querySelector('.player-card');
+  const isClickInside = playerCard.contains(e.target);
+  
+  if (!isClickInside && playerCard.classList.contains('flipped')) {
+    playerCard.classList.remove('flipped');
+  }
 });
 
 document.querySelectorAll(".close-settings-btn").forEach(btn => {
@@ -1702,60 +1756,56 @@ logoutBtn.addEventListener("click", async () => {
   }
 });
 
-privacyPolicyBtn.addEventListener("click", () => {
-  hidePopup(settingsPopup);
-  showPopup(privacyPolicyPopup);
-});
-
-newGameBtn.addEventListener("click", () => {
-  hidePopup(settingsPopup);
-  showPopup(newGamePopup);
-  
-  // Rellenar el formulario con los datos actuales
-  newGameBandName.value = gameState.bandName;
-  newGameLeaderName.value = gameState.leaderName;
-  newGameStartCountry.value = gameState.currentIso;
-  
-  // Seleccionar la imagen de líder actual
-  const leaderCards = newGameLeaderList.querySelectorAll(".leader-card");
-  leaderCards.forEach(card => {
-    const img = card.querySelector(".leader-card-image");
-    if (img.src === gameState.leaderImage) {
-      card.classList.add("selected");
-    } else {
-      card.classList.remove("selected");
-    }
-  });
-});
-
-/* Nueva partida */
-newGameForm.addEventListener("submit", async (e) => {
+/* Registro */
+registerForm.addEventListener("submit", async e => {
   e.preventDefault();
-  
-  const selectedLeaderImg = newGameLeaderList.querySelector(".leader-card.selected .leader-card-image");
-  if (!selectedLeaderImg) {
-    addNotification("Por favor, selecciona un líder", "auth");
+  registerButton.disabled = true;
+  addNotification("Registrando y comenzando partida...", "loading");
+
+  const email = registerEmailInput.value;
+  const pass = registerPasswordInput.value;
+  const conf = registerPasswordConfirmInput.value;
+  const bName = registerBandNameInput.value;
+  const sCountry = registerStartCountryInput.value;
+  const lName = registerLeaderNameInput.value;
+  const lImg = document.querySelector(".leader-card.selected .leader-card-image")?.getAttribute("src");
+
+  if (pass !== conf) {
+    addNotification("Las contraseñas no coinciden.", "auth");
+    registerButton.disabled = false;
+    return;
+  }
+  if (!lImg) {
+    addNotification("Selecciona un líder.", "auth");
+    registerButton.disabled = false;
+    return;
+  }
+  if (!sCountry) {
+    addNotification("Selecciona un país de inicio.", "auth");
+    registerButton.disabled = false;
     return;
   }
 
+  gameState.bandName = bName;
+  gameState.startCountry = countriesData.features.find(f => f.id === sCountry)?.properties?.name || sCountry;
+  gameState.leaderName = lName;
+  gameState.leaderImage = lImg;
+
   try {
-    // Guardar datos actuales por si algo sale mal
-    const oldGameState = { ...gameState };
-    
-    // Crear nuevo estado de juego
-    const newGameState = { ...defaultGameState };
-    Object.assign(newGameState, {
-      bandName: newGameBandName.value,
-      startCountry: countriesData.features.find(f => f.id === newGameStartCountry.value)?.properties?.name || newGameStartCountry.value,
-      leaderName: newGameLeaderName.value,
-      leaderImage: selectedLeaderImg.src,
-      currentIso: newGameStartCountry.value,
+    const u = await register(email, pass);
+    const initGame = { ...defaultGameState };
+    Object.assign(initGame, {
+      bandName: bName,
+      startCountry: gameState.startCountry,
+      leaderName: lName,
+      leaderImage: lImg,
+      currentIso: sCountry,
       gameActive: true,
       firstSession: true,
       countryStatus: {
-        [newGameStartCountry.value]: {
-          countryName: countriesData.features.find(f => f.id === newGameStartCountry.value)?.properties?.name || newGameStartCountry.value,
-          popReal: getPopulationFromFeature(newGameStartCountry.value),
+        [sCountry]: {
+          countryName: gameState.startCountry,
+          popReal: getPopulationFromFeature(sCountry),
           control: 100,
           dominated: true,
           arrestedTotal: 0,
@@ -1763,36 +1813,45 @@ newGameForm.addEventListener("submit", async (e) => {
         }
       }
     });
-
-    // Actualizar estado y guardar
-    Object.assign(gameState, newGameState);
-    await saveGame();
-    
-    // Reiniciar UI
-    hidePopup(newGamePopup);
-    renderStats();
-    renderUpgrades();
-    renderInvestments();
-    renderWorldList();
-    refreshGeoStyle();
-    
-    // Mostrar minion inicial
-    displayInitialMinion(newGameStartCountry.value);
-    
-    addNotification("¡Nueva partida iniciada correctamente!", "general");
-    SoundManager.playButtonClick();
-    
-  } catch (error) {
-    console.error("Error starting new game:", error);
-    addNotification("Error al iniciar nueva partida", "auth");
+    await set(ref(database, `users/${u.uid}/gameState`), initGame);
+    await loadGame(u.uid);
+    SoundManager.startBackgroundMusic();
+    addNotification(`Registro exitoso para: ${email}`, "general");
+    authContainer.classList.add("hidden");
+    sidebar.classList.remove("active");
+    sidebar.style.transition = "none";
+    document.body.classList.remove("auth-active");
+    statsBanner.classList.remove("hidden");
+    setTimeout(() => { sidebar.style.transition = ""; }, 50);
+    displayInitialMinion(sCountry);
+  } catch (err){
+    addNotification(`Error de registro: ${err.message}`, "auth");
+    console.error("Error de registro:", err);
+    registerButton.disabled = false;
+  } finally {
+    registerButton.disabled = false;
   }
 });
 
-/* Selección de líder en nueva partida */
-newGameLeaderList.querySelectorAll(".leader-card").forEach(card => {
-  card.addEventListener("click", () => {
-    newGameLeaderList.querySelectorAll(".leader-card").forEach(c => c.classList.remove("selected"));
-    card.classList.add("selected");
-    SoundManager.playButtonClick();
+/* Login */
+loginForm.addEventListener("submit", e => {
+  e.preventDefault();
+  const email = loginEmailInput.value;
+  const pass = loginPasswordInput.value;
+  login(email, pass)
+  .then(u => {
+    sidebar.classList.remove("active");
+    sidebar.style.transition = "none";
+    document.body.classList.remove("auth-active");
+    authContainer.classList.add("hidden");
+    statsBanner.classList.remove("hidden");
+    loadGame(u.uid).then(() => {
+      SoundManager.startBackgroundMusic();
+      setTimeout(() => { sidebar.style.transition = ""; }, 50);
+    });
+    addNotification(`Inicio de sesión exitoso para: ${email}`, "general");
+  })
+  .catch(err => {
+    addNotification(`Error de inicio de sesión: ${err.message}`, "auth");
   });
 });
