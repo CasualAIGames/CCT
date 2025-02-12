@@ -1,216 +1,204 @@
 // sounds.js
 
-const SoundManager = (() => {
-  // Se utiliza AudioContext para generar sonidos con la API Web Audio.
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  const audioCtx = new AudioContext();
+class SoundManager {
+  static audioCtx;
+  static backgroundMusic;
+  static gainNode;
+  static sfxGainNode;
+  static isPlaying = false;
+  static musicSource = null;
 
-  // Se crea un masterGain para controlar el volumen global.
-  const masterGain = audioCtx.createGain();
-  masterGain.gain.value = 0.5; // Ajusta el volumen general aquí.
-  masterGain.connect(audioCtx.destination);
-
-  let bgMusic = null;
-  let musicStarted = false; // Flag to track if music has started
-
-  // Inicializa la música de fondo.
-  function initBackgroundMusic() {
-      bgMusic = new Audio('assets/sounds/music.mp3');
-      bgMusic.loop = true;
-      bgMusic.volume = 0.3; // Adjust background music volume if needed
-
-      // Conecta la música de fondo al AudioContext.
-      const bgSource = audioCtx.createMediaElementSource(bgMusic);
-      bgSource.connect(masterGain);
-
-      bgMusic.addEventListener('ended', () => {
-          // Ensure looping in case of any issues
-          bgMusic.currentTime = 0;
-          bgMusic.play().catch(error => {
-              console.error("Error playing background music after ended event:", error);
-          });
-      });
-
-      bgMusic.addEventListener('error', (e) => {
-          console.error("Error loading or playing background music:", e);
-      });
+  static init() {
+    try {
+      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      this.gainNode = this.audioCtx.createGain();
+      this.sfxGainNode = this.audioCtx.createGain();
+      this.gainNode.connect(this.audioCtx.destination);
+      this.sfxGainNode.connect(this.audioCtx.destination);
+      
+      // Establecer volúmenes iniciales
+      this.gainNode.gain.value = 0.5;
+      this.sfxGainNode.gain.value = 0.5;
+      
+      this.loadBackgroundMusic();
+    } catch (error) {
+      console.error('Error initializing audio context:', error);
+    }
   }
 
-  /**
-   * Reproduce un tono con los parámetros especificados.
-   * @param {number} frequency Frecuencia en Hz.
-   * @param {string} type Tipo de onda ('sine', 'square', 'triangle', 'sawtooth').
-   * @param {number} duration Duración en segundos.
-   * @param {number} volume Volumen (0 a 1).
-   * @param {number} delay Retraso en segundos antes de iniciar.
-   */
-  function playTone(frequency, type = 'sine', duration = 0.2, volume = 0.5, delay = 0) {
-      if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
+  static async loadBackgroundMusic() {
+    try {
+      const response = await fetch('assets/sounds/music.mp3');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
+      const arrayBuffer = await response.arrayBuffer();
+      this.backgroundMusic = await this.audioCtx.decodeAudioData(arrayBuffer);
+    } catch (error) {
+      console.error('Error loading background music:', error);
+    }
+  }
 
-      oscillator.type = type;
-      oscillator.frequency.value = frequency;
+  static startBackgroundMusic() {
+    if (this.isPlaying || !this.backgroundMusic) return;
+    
+    try {
+      if (this.musicSource) {
+        this.musicSource.disconnect();
+      }
+      
+      this.musicSource = this.audioCtx.createBufferSource();
+      this.musicSource.buffer = this.backgroundMusic;
+      this.musicSource.connect(this.gainNode);
+      this.musicSource.loop = true;
+      this.musicSource.start();
+      this.isPlaying = true;
+    } catch (error) {
+      console.error('Error starting background music:', error);
+    }
+  }
 
-      const now = audioCtx.currentTime + delay;
-      gainNode.gain.setValueAtTime(volume, now);
-      // Se utiliza una rampa exponencial para una salida suave.
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+  static stopBackgroundMusic() {
+    if (!this.isPlaying) return;
+    try {
+      if (this.musicSource) {
+        this.musicSource.stop();
+        this.musicSource.disconnect();
+      }
+      this.isPlaying = false;
+    } catch (error) {
+      console.error('Error stopping background music:', error);
+    }
+  }
+
+  static setBackgroundMusicVolume(volume) {
+    if (this.gainNode) {
+      try {
+        this.gainNode.gain.setValueAtTime(volume, this.audioCtx.currentTime);
+      } catch (error) {
+        console.error('Error setting background music volume:', error);
+      }
+    }
+  }
+
+  static setSFXVolume(volume) {
+    if (this.sfxGainNode) {
+      try {
+        this.sfxGainNode.gain.setValueAtTime(volume, this.audioCtx.currentTime);
+      } catch (error) {
+        console.error('Error setting SFX volume:', error);
+      }
+    }
+  }
+
+  static async playSound(soundName) {
+    try {
+      // Simular efectos de sonido básicos con osciladores si no hay archivos
+      const oscillator = this.audioCtx.createOscillator();
+      const gainNode = this.audioCtx.createGain();
+      
+      switch(soundName) {
+        case 'click':
+          oscillator.frequency.value = 800;
+          oscillator.type = 'sine';
+          gainNode.gain.value = 0.1;
+          break;
+        case 'money':
+          oscillator.frequency.value = 600;
+          oscillator.type = 'triangle';
+          gainNode.gain.value = 0.2;
+          break;
+        case 'upgrade':
+          oscillator.frequency.value = 1000;
+          oscillator.type = 'sine';
+          gainNode.gain.value = 0.15;
+          break;
+        case 'error':
+          oscillator.frequency.value = 200;
+          oscillator.type = 'sawtooth';
+          gainNode.gain.value = 0.1;
+          break;
+        case 'expansion':
+          oscillator.frequency.value = 400;
+          oscillator.type = 'square';
+          gainNode.gain.value = 0.15;
+          break;
+        case 'police':
+          oscillator.frequency.value = 300;
+          oscillator.type = 'sawtooth';
+          gainNode.gain.value = 0.2;
+          break;
+        case 'popup':
+          oscillator.frequency.value = 700;
+          oscillator.type = 'sine';
+          gainNode.gain.value = 0.1;
+          break;
+        case 'gameover':
+          oscillator.frequency.value = 150;
+          oscillator.type = 'sawtooth';
+          gainNode.gain.value = 0.25;
+          break;
+        case 'notification':
+          oscillator.frequency.value = 900;
+          oscillator.type = 'sine';
+          gainNode.gain.value = 0.1;
+          break;
+        default:
+          oscillator.frequency.value = 440;
+          oscillator.type = 'sine';
+          gainNode.gain.value = 0.1;
+      }
 
       oscillator.connect(gainNode);
-      gainNode.connect(masterGain);
-
-      oscillator.start(now);
-      oscillator.stop(now + duration);
+      gainNode.connect(this.sfxGainNode);
+      
+      oscillator.start();
+      setTimeout(() => {
+        oscillator.stop();
+        oscillator.disconnect();
+        gainNode.disconnect();
+      }, 100);
+      
+    } catch (error) {
+      console.error(`Error playing sound ${soundName}:`, error);
+    }
   }
 
-  /**
-   * Reproduce una secuencia de tonos para lograr efectos sonoros más complejos.
-   * Cada objeto en el array debe tener: frequency, type, duration, volume y delay.
-   * @param {Array} sequence Array de objetos con las propiedades de cada tono.
-   */
-  function playSequence(sequence) {
-      sequence.forEach(tone => {
-          playTone(tone.frequency, tone.type, tone.duration, tone.volume, tone.delay);
-      });
+  static playButtonClick() {
+    this.playSound('click');
   }
 
-  // ---------------- Funciones originales con mejoras y nuevas funciones ---------------- //
-
-  function playButtonClick() {
-      // Sonido rápido y satisfactorio al pulsar un botón.
-      playTone(400, 'triangle', 0.1, 0.3);
+  static playMoneyEarned() {
+    this.playSound('money');
   }
 
-  function playNotification() {
-      // Sonido de notificación con dos tonos en secuencia.
-      playSequence([
-          { frequency: 800, type: 'sine', duration: 0.1, volume: 0.3, delay: 0 },
-          { frequency: 1000, type: 'sine', duration: 0.1, volume: 0.3, delay: 0.1 }
-      ]);
+  static playUpgradePurchase() {
+    this.playSound('upgrade');
   }
 
-  function playExpansion() {
-      // Sonido en cascada para indicar expansión (por ejemplo, al conquistar un país).
-      playSequence([
-          { frequency: 500, type: 'sine', duration: 0.1, volume: 0.4, delay: 0 },
-          { frequency: 600, type: 'sine', duration: 0.1, volume: 0.4, delay: 0.1 },
-          { frequency: 700, type: 'sine', duration: 0.1, volume: 0.4, delay: 0.2 }
-      ]);
+  static playInsufficientFunds() {
+    this.playSound('error');
   }
 
-  function playPolice() {
-      // Sonido agresivo usando ondas sawtooth para acciones policiales.
-      playSequence([
-          { frequency: 1000, type: 'sawtooth', duration: 0.2, volume: 0.4, delay: 0 },
-          { frequency: 800, type: 'sawtooth', duration: 0.2, volume: 0.4, delay: 0.2 }
-      ]);
+  static playExpansion() {
+    this.playSound('expansion');
   }
 
-  function playPopup() {
-      // Sonido suave e invitante para ventanas emergentes.
-      playTone(1200, 'triangle', 0.2, 0.3);
+  static playPolice() {
+    this.playSound('police');
   }
 
-  function playRescueSuccess() {
-      // Sonido corto y festivo para indicar éxito en una acción de rescate.
-      playSequence([
-          { frequency: 1000, type: 'sine', duration: 0.15, volume: 0.5, delay: 0 },
-          { frequency: 1200, type: 'sine', duration: 0.15, volume: 0.5, delay: 0.15 }
-      ]);
+  static playPopup() {
+    this.playSound('popup');
   }
 
-  function playRescueFail() {
-      // Sonido con tono bajo para indicar fallo en una acción.
-      playTone(500, 'sine', 0.15, 0.5);
+  static playGameOver() {
+    this.playSound('gameover');
   }
 
-  // ---------------- Nuevas funciones de sonido para más variedad ---------------- //
-
-  function playMoneyEarned() {
-      // Sonido en forma de cascada (chime) para cuando se recolecta dinero.
-      playSequence([
-          { frequency: 600, type: 'sine', duration: 0.1, volume: 0.4, delay: 0 },
-          { frequency: 800, type: 'sine', duration: 0.1, volume: 0.4, delay: 0.15 },
-          { frequency: 1000, type: 'sine', duration: 0.1, volume: 0.4, delay: 0.3 }
-      ]);
+  static playNotification() {
+    this.playSound('notification');
   }
-
-  function playUpgradePurchase() {
-      // Sonido que indica la compra exitosa de una mejora.
-      playSequence([
-          { frequency: 700, type: 'triangle', duration: 0.1, volume: 0.3, delay: 0 },
-          { frequency: 900, type: 'triangle', duration: 0.1, volume: 0.3, delay: 0.1 }
-      ]);
-  }
-
-  function playInsufficientFunds() {
-      // Sonido descendente para indicar que no hay suficiente dinero.
-      playSequence([
-          { frequency: 800, type: 'sine', duration: 0.1, volume: 0.3, delay: 0 },
-          { frequency: 600, type: 'sine', duration: 0.1, volume: 0.3, delay: 0.1 }
-      ]);
-  }
-
-  function playGameOver() {
-      // Sonido melancólico para el fin del juego.
-      playSequence([
-          { frequency: 300, type: 'sawtooth', duration: 0.2, volume: 0.5, delay: 0 },
-          { frequency: 200, type: 'sawtooth', duration: 0.3, volume: 0.5, delay: 0.2 }
-      ]);
-  }
-
-  // Funciones para controlar la música de fondo.
-  function startBackgroundMusic() {
-      if (bgMusic && !musicStarted) {
-          bgMusic.play().catch(error => {
-              console.error("Error starting background music:", error);
-          });
-          musicStarted = true;
-      } else if (bgMusic && musicStarted) {
-          // If music is already started, just ensure it's playing in case it was paused
-          if (bgMusic.paused) {
-              bgMusic.play().catch(error => {
-                  console.error("Error resuming background music:", error);
-              });
-          }
-      } else {
-          console.warn("Background music not initialized properly.");
-      }
-  }
-
-
-  function stopBackgroundMusic() {
-      if (bgMusic) {
-          bgMusic.pause();
-          bgMusic.currentTime = 0;
-          musicStarted = false;
-      }
-  }
-
-  return {
-      init() {
-          initBackgroundMusic();
-      },
-      playButtonClick,
-      playNotification,
-      playExpansion,
-      playPolice,
-      playPopup,
-      playRescueSuccess,
-      playRescueFail,
-      playMoneyEarned,
-      playUpgradePurchase,
-      playInsufficientFunds,
-      playGameOver,
-      startBackgroundMusic,
-      stopBackgroundMusic,
-      audioCtx,
-      playTone,     // Se expone en caso de que necesites reproducir tonos personalizados.
-      playSequence  // Se expone para generar nuevas secuencias de sonido.
-  };
-})();
+}
 
 export default SoundManager;

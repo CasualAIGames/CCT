@@ -38,6 +38,9 @@
             </span>
           </div>
         </div>
+        <button id="playerSettingsBtn" class="player-settings-btn">
+          <i class="fas fa-cog"></i>
+        </button>
       </div>
 
       <div class="tab-buttons">
@@ -162,7 +165,7 @@
     </div>
 
     <div id="fixed-action-buttons">
-      <img id="btnMoneyClick" src="assets/images/generatemoney.webp" alt="Generar Dinero" id="btnMoneyClick" >
+      <img src="assets/images/generatemoney.webp" alt="Generar Dinero" id="btnMoneyClick">
       <button id="menu-toggle-button" class="menu-toggle-button">
         <i class="fas fa-chevron-left"></i>
       </button>
@@ -252,13 +255,144 @@
     </div>
 
     <div id="newsPopup" class="hidden">
-      <div class="news-content">
-          <h3 id="popupNewsTitle"></h3>  
-          <p id="newsPopupDescription"></p>
-          <button class="close-news-btn">X</button>
+      <div class="news-header">
+        <img class="news-icon" alt="Icono de noticia">
+        <div class="news-title-header">
+          <div class="news-banner"></div>
+        </div>
+        <button class="close-news-btn">×</button>
       </div>
-  </div>
+      <div class="news-content"></div>
+    </div>
     <div id="newsOverlay" class="overlay hidden"></div>
+
+    <div id="settingsPopup" class="settings-popup hidden">
+      <div class="settings-content">
+        <button class="close-settings-btn">×</button>
+        <h2 class="settings-title">Ajustes del Jugador</h2>
+        
+        <div class="settings-section">
+          <h3>Sonido</h3>
+          <div class="volume-control">
+            <label>Música de Fondo</label>
+            <input type="range" id="bgMusicVolume" min="0" max="100" value="50">
+          </div>
+          <div class="volume-control">
+            <label>Efectos de Sonido</label>
+            <input type="range" id="sfxVolume" min="0" max="100" value="50">
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Cuenta</h3>
+          <button id="newGameBtn" class="settings-button">
+            <i class="fas fa-play"></i> Nueva Partida
+          </button>
+          <button id="logoutBtn" class="settings-button">
+            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+          </button>
+          <button id="privacyPolicyBtn" class="settings-button">
+            <i class="fas fa-shield-alt"></i> Política de Privacidad
+          </button>
+        </div>
+
+        <div class="settings-section social-links">
+          <h3>Síguenos</h3>
+          <div class="social-buttons">
+            <a href="https://twitter.com/clickandconquer" target="_blank" class="social-button">
+              <i class="fab fa-twitter"></i> Twitter
+            </a>
+            <a href="https://instagram.com/clickandconquergame" target="_blank" class="social-button">
+              <i class="fab fa-instagram"></i> Instagram
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="newGamePopup" class="settings-popup hidden">
+      <div class="settings-content">
+        <button class="close-settings-btn">×</button>
+        <h2 class="settings-title">Nueva Partida</h2>
+        
+        <form id="newGameForm">
+          <div class="input-group">
+            <label>Nombre de la Banda:</label>
+            <input type="text" id="newGameBandName" required>
+          </div>
+          
+          <div class="input-group">
+            <label>Nombre del Líder:</label>
+            <input type="text" id="newGameLeaderName" required>
+          </div>
+          
+          <div class="input-group">
+            <label>País Inicial:</label>
+            <select id="newGameStartCountry" required>
+              <option value="">-- Elige País --</option>
+            </select>
+          </div>
+          
+          <div class="input-group">
+            <label>Selecciona tu líder:</label>
+            <div class="leader-list" id="newGameLeaderList">
+              <div class="leader-card">
+                <div class="leader-card-inner" data-leader-id="leader1">
+                  <img src="assets/images/man.webp" alt="Líder Masculino" class="leader-card-image">
+                </div>
+              </div>
+              <div class="leader-card">
+                <div class="leader-card-inner" data-leader-id="leader2">
+                  <img src="assets/images/woman.webp" alt="Líder Femenina" class="leader-card-image">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="settings-button confirm-button">
+            <i class="fas fa-check"></i> Comenzar Nueva Partida
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div id="privacyPolicyPopup" class="settings-popup hidden">
+      <div class="settings-content">
+        <button class="close-settings-btn">×</button>
+        <h2 class="settings-title">Política de Privacidad</h2>
+        <div class="privacy-content">
+          <h3>Información que Recopilamos</h3>
+          <p>Solo almacenamos la información necesaria para el funcionamiento del juego:</p>
+          <ul>
+            <li>Tu dirección de correo electrónico</li>
+            <li>Datos del juego (progreso, estadísticas, etc.)</li>
+          </ul>
+
+          <h3>Uso de la Información</h3>
+          <p>Utilizamos tu información únicamente para:</p>
+          <ul>
+            <li>Mantener tu cuenta y progreso del juego</li>
+            <li>Mejorar tu experiencia de juego</li>
+            <li>Comunicarnos contigo sobre actualizaciones importantes</li>
+          </ul>
+
+          <h3>Protección de Datos</h3>
+          <p>Tus datos están seguros con nosotros. Utilizamos Firebase de Google para el almacenamiento y autenticación, garantizando los más altos estándares de seguridad.</p>
+
+          <h3>Tus Derechos</h3>
+          <p>Tienes derecho a:</p>
+          <ul>
+            <li>Acceder a tus datos</li>
+            <li>Corregir tus datos</li>
+            <li>Eliminar tu cuenta y datos</li>
+          </ul>
+
+          <h3>Contacto</h3>
+          <p>Para cualquier consulta sobre privacidad, contáctanos en: privacy@clickconquertycoon.com</p>
+        </div>
+      </div>
+    </div>
+
     <script src="src/js/main.js" type="module"></script>
     <script src="src/js/particles.js" type="module"></script>
   </div>
