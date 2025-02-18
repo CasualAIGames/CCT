@@ -23,15 +23,18 @@ export function removeNotificationElement(nd, cont){
   }, SLIDEOUT_ANIMATION_DURATION)
 }
 
-export function createNotificationCloseButton(div, cont){
+export function createNotificationCloseButton(div, cont, SoundManager){
   const c = document.createElement("span")
   c.classList.add("close-btn")
   c.innerText = "X"
-  c.onclick = () => removeNotificationElement(div, cont)
+  c.onclick = () => {
+    removeNotificationElement(div, cont)
+    if(SoundManager) SoundManager.playButtonClick()
+  }
   return c
 }
 
-export function createNotificationElement(msg, type, cont, countryName = null){
+export function createNotificationElement(msg, type, cont, countryName = null, SoundManager = null){
   const d = document.createElement("div")
   d.classList.add("notification", type)
   let icon = ""
@@ -42,28 +45,32 @@ export function createNotificationElement(msg, type, cont, countryName = null){
     case "notEnoughMoney": icon = '<i class="fas fa-exclamation-triangle"></i> '; break
     case "countryConquered": icon = '<i class="fas fa-flag-checkered"></i> '; break
     case "auth": icon = '<i class="fas fa-exclamation-circle"></i> '; break
+    case "loading": icon = '<i class="fas fa-spinner fa-spin"></i> '; break
   }
-  const cl = createNotificationCloseButton(d, cont)
+  const cl = createNotificationCloseButton(d, cont, SoundManager)
   d.appendChild(cl)
   const t = document.createElement("div")
   t.classList.add("notification-text")
   t.innerHTML = icon + msg + (countryName ? ` ${countryName}!` : "")
   d.appendChild(t)
   cont.appendChild(d)
+  if(SoundManager) SoundManager.playNotification()
   return d
 }
 
-export function addNotification(msg, type="general", countryName=null, notificationContainer, statsBanner, gameState, NOT_ENOUGH_MONEY_COOLDOWN, conqueredCountriesNotification, removeNotificationElement, createNotificationElement){
+export function addNotification(msg, type = "general", countryName = null, gameState, notificationContainer, conqueredCountriesNotification = null, SoundManager = null){
   const now = Date.now()
-  if(type === "notEnoughMoney" && now - gameState.lastNotEnoughMoneyNotification < NOT_ENOUGH_MONEY_COOLDOWN) return
+  if(type === "notEnoughMoney" && now - gameState.lastNotEnoughMoneyNotification < NOTIFICATION_DURATION) return
   if(type === "notEnoughMoney") gameState.lastNotEnoughMoneyNotification = now
-  const c = statsBanner.classList.contains("hidden") ? notificationContainer : notificationContainer
+
+  const c = notificationContainer
+
   if(type === "countryConquered"){
     if(conqueredCountriesNotification){
       conqueredCountriesNotification.querySelector(".notification-text").innerHTML += `<br>¡Has dominado ${countryName}!`
       return
     } else {
-      const dv = createNotificationElement(msg, type, c, countryName)
+      const dv = createNotificationElement(msg, type, c, countryName, SoundManager)
       conqueredCountriesNotification = dv
       setTimeout(() => {
         removeNotificationElement(dv, c)
@@ -72,8 +79,10 @@ export function addNotification(msg, type="general", countryName=null, notificat
       return
     }
   }
-  const div = createNotificationElement(msg, type, c, countryName)
+
+  const div = createNotificationElement(msg, type, c, countryName, SoundManager)
   setTimeout(() => removeNotificationElement(div, c), NOTIFICATION_DURATION)
+  return div
 }
 
 export function createAnimation(el, val, t){
@@ -122,8 +131,6 @@ export function createCenterPopupAnimation(txt, t){
     }
   }, CENTER_POPUP_DURATION)
 }
-
-export function updateHeatUI(){}
 
 export function recalcPoliceStarsFromValue(stars, gameState, updatePoliceNotification){
   gameState.policeStars = Math.min(5, Math.max(0, stars))

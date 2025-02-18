@@ -5,10 +5,30 @@ import { initializeAuth, logout, register, login } from "./auth.js"
 import { database, ref, set, get } from "./firebase-config.js"
 import { generateMoneyParticles } from "./particles.js"
 import SoundManager from "./sounds.js"
+import { formatNumber, removeNotificationElement, createNotificationCloseButton, createNotificationElement, addNotification, createAnimation } from "./utils.js"
+import { 
+  BASE_EXPANSION_PROBABILITY,
+  EXPANSION_DIFFICULTY_FACTOR,
+  UPGRADE_COST_MULTIPLIER,
+  NOTIFICATION_DURATION,
+  ANIMATION_DURATION,
+  SLIDEOUT_ANIMATION_DURATION,
+  MONEY_ICON_SPAWN_INTERVAL,
+  ESBIRROS_ICON_SPAWN_INTERVAL,
+  POLICE_ICON_SPAWN_INTERVAL,
+  POPULATION_CONTROL_GAME_OVER_THRESHOLD,
+  EXPANSION_ANIMATION_CIRCLE_RADIUS_INCREMENT,
+  EXPANSION_ANIMATION_CIRCLE_MAX_RADIUS,
+  EXPANSION_ANIMATION_INTERVAL_MS,
+  MIN_POLICE_RESISTANCE_EFFECT,
+  DOMINANCE_FACTOR_MULTIPLIER
+} from "./config.js"
 
 const turf = window.turf;
 
 SoundManager.init(); // Inicializar SoundManager en cuanto se importa
+
+const ICON_ANIMATION_DURATION = 300;
 
 const mapElement = document.getElementById("map");
 const notificationContainer = document.getElementById("notificationContainer");
@@ -101,22 +121,6 @@ let policeIconsEnabled = false;
 let lastMoneySpawn = 0;
 let lastEsbirrosSpawn = 0;
 let lastPoliceSpawn = 0;
-let BASE_EXPANSION_PROBABILITY = 0.005;
-const EXPANSION_DIFFICULTY_FACTOR = 0.1;
-const UPGRADE_COST_MULTIPLIER = 1.15;
-const NOTIFICATION_DURATION = 10000;
-const ANIMATION_DURATION = 500;
-const SLIDEOUT_ANIMATION_DURATION = 400;
-const ICON_ANIMATION_DURATION = 300;
-const MONEY_ICON_SPAWN_INTERVAL = 30000;
-const ESBIRROS_ICON_SPAWN_INTERVAL = 40000;
-const POLICE_ICON_SPAWN_INTERVAL = 45000;
-const POPULATION_CONTROL_GAME_OVER_THRESHOLD = 51;
-const EXPANSION_ANIMATION_CIRCLE_RADIUS_INCREMENT = 1;
-const EXPANSION_ANIMATION_CIRCLE_MAX_RADIUS = 100;
-const EXPANSION_ANIMATION_INTERVAL_MS = 10;
-const MIN_POLICE_RESISTANCE_EFFECT = 0.1;
-const DOMINANCE_FACTOR_MULTIPLIER = 2;
 
 const defaultGameState = {
   playerMoney: 100,
@@ -167,115 +171,6 @@ const moneyIcon = L.icon({ iconUrl: "assets/images/iconodinero.webp", iconSize: 
 const esbirrosIcon = L.icon({ iconUrl: "assets/images/iconoesbirro.webp", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] });
 const policeIcon = L.icon({ iconUrl: "assets/images/iconopolicia.webp", iconSize: [48,48], iconAnchor: [24,48], popupAnchor: [0,-48] });
 const welcomeIcon = L.icon({ iconUrl: "assets/images/iconoinfo.webp", iconSize: [64,64], iconAnchor: [32,64], className: "esbirro-marker" });
-
-function formatNumber(num) {
-  if(isNaN(num)) return "NaN";
-  const s = ["","K","M","B","T","P","E"];
-  const d = 1000;
-  for(let i = s.length-1; i > 0; i--){
-    if(num >= Math.pow(d, i)){
-      const f = (num / Math.pow(d, i)).toFixed(2);
-      return f + s[i];
-    }
-  }
-  return num.toFixed(2);
-}
-
-function removeNotificationElement(nd, cont){
-  nd.classList.add("slideOutNotification");
-  setTimeout(() => {
-    if(cont.contains(nd)){
-      cont.removeChild(nd);
-    }
-  }, SLIDEOUT_ANIMATION_DURATION);
-}
-
-function createNotificationCloseButton(div, cont){
-  const c = document.createElement("span");
-  c.classList.add("close-btn");
-  c.innerText = "X";
-  c.onclick = () => {
-    removeNotificationElement(div, cont);
-    SoundManager.playButtonClick(); // Sonido al cerrar notificación
-  };
-  return c;
-}
-
-function createNotificationElement(msg, type, cont, countryName = null){
-  const d = document.createElement("div");
-  d.classList.add("notification", type);
-  let icon = "";
-  switch(type){
-    case "searchStars": icon = '<i class="fas fa-shield-alt"></i> '; break;
-    case "gameResult": icon = '<i class="fas fa-trophy"></i> '; break;
-    case "expansion": icon = '<i class="fas fa-globe"></i> '; break;
-    case "notEnoughMoney": icon = '<i class="fas fa-exclamation-triangle"></i> '; break;
-    case "countryConquered": icon = '<i class="fas fa-flag-checkered"></i> '; break;
-    case "auth": icon = '<i class="fas fa-exclamation-circle"></i> '; break;
-    case "loading": icon = '<i class="fas fa-spinner fa-spin"></i> '; break;
-  }
-  const cl = createNotificationCloseButton(d, cont);
-  d.appendChild(cl);
-  const t = document.createElement("div");
-  t.classList.add("notification-text");
-  t.innerHTML = icon + msg + (countryName ? ` ${countryName}!` : "");
-  d.appendChild(t);
-  cont.appendChild(d);
-  SoundManager.playNotification(); // Sonido de notificación
-  return d;
-}
-
-function addNotification(msg, type="general", countryName=null){
-  const now = Date.now();
-  if(type === "notEnoughMoney" && now - gameState.lastNotEnoughMoneyNotification < NOTIFICATION_DURATION) return;
-  if(type === "notEnoughMoney") gameState.lastNotEnoughMoneyNotification = now;
-
-  const c = notificationContainer;
-
-  if(type === "countryConquered"){
-    if(conqueredCountriesNotification){
-      conqueredCountriesNotification.querySelector(".notification-text").innerHTML += `<br>¡Has dominado ${countryName}!`;
-      return;
-    } else {
-      const dv = createNotificationElement(msg, type, c, countryName);
-      conqueredCountriesNotification = dv;
-      setTimeout(() => {
-        removeNotificationElement(dv, c);
-        conqueredCountriesNotification = null;
-      }, 15000);
-      return;
-    }
-  }
-
-  const div = createNotificationElement(msg, type, c, countryName);
-  setTimeout(() => removeNotificationElement(div, c), NOTIFICATION_DURATION);
-}
-
-/* Pequeña animación de texto emergente */
-function createAnimation(el, val, t){
-  if(!el) return;
-  const r = el.getBoundingClientRect();
-  const a = document.createElement("div");
-  a.classList.add(`${t}-animation`);
-  a.style.left = `${r.left + r.width/2}px`;
-  a.style.top = `${r.top + r.height/2}px`;
-  a.textContent = `${t==="arrested" ? "-" : "+"}${formatNumber(val)}`;
-  document.body.appendChild(a);
-  requestAnimationFrame(() => {
-    a.style.transform = "translateY(-20px)";
-    a.style.opacity = 0;
-    a.style.fontFamily = "Pricedown";
-    a.style.color = (t==="money"||t==="esbirros") ? "green" : "#ff0000";
-  });
-  el.classList.add(`${t}-flash`);
-
-  setTimeout(() => {
-    if(document.body.contains(a)){
-      document.body.removeChild(a);
-    }
-    el.classList.remove(`${t}-flash`);
-  }, ANIMATION_DURATION);
-}
 
 /* Animación gradual para la bonificación dentro de la noticia */
 function easeOutQuad(t, b, c, d) {
@@ -345,7 +240,6 @@ function animateBonusRewardInNews(finalValue, iconType, duration = 2000, onClaim
   requestAnimationFrame(step);
 }
 
-/* Quitar la función vacía updateHeatUI() y su llamada si no la usas */
 function recalcPoliceStarsFromValue(stars){
   gameState.policeStars = Math.min(5, Math.max(0, stars));
   updatePoliceNotification();
@@ -412,7 +306,7 @@ window.addEventListener("beforeunload", () => {
 registerForm.addEventListener("submit", async e => {
   e.preventDefault();
   registerButton.disabled = true;
-  addNotification("Registrando y comenzando partida...", "loading");
+  addNotification("Registrando y comenzando partida...", "loading", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
 
   const email = registerEmailInput.value;
   const pass = registerPasswordInput.value;
@@ -423,17 +317,17 @@ registerForm.addEventListener("submit", async e => {
   const lImg = document.querySelector(".leader-card.selected .leader-card-image")?.getAttribute("src");
 
   if (pass !== conf) {
-    addNotification("Las contraseñas no coinciden.", "auth");
+    addNotification("Las contraseñas no coinciden.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
     registerButton.disabled = false;
     return;
   }
   if (!lImg) {
-    addNotification("Selecciona un líder.", "auth");
+    addNotification("Selecciona un líder.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
     registerButton.disabled = false;
     return;
   }
   if (!sCountry) {
-    addNotification("Selecciona un país de inicio.", "auth");
+    addNotification("Selecciona un país de inicio.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
     registerButton.disabled = false;
     return;
   }
@@ -468,7 +362,7 @@ registerForm.addEventListener("submit", async e => {
     await set(ref(database, `users/${u.uid}/gameState`), initGame);
     await loadGame(u.uid);
     SoundManager.startBackgroundMusic();
-    addNotification(`Registro exitoso para: ${email}`, "general");
+    addNotification(`Registro exitoso para: ${email}`, "general", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
     authContainer.classList.add("hidden");
     sidebar.classList.remove("active");
     sidebar.style.transition = "none";
@@ -477,7 +371,7 @@ registerForm.addEventListener("submit", async e => {
     setTimeout(() => { sidebar.style.transition = ""; }, 50);
     displayInitialMinion(sCountry);
   } catch (err){
-    addNotification(`Error de registro: ${err.message}`, "auth");
+    addNotification(`Error de registro: ${err.message}`, "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
     console.error("Error de registro:", err);
     registerButton.disabled = false;
   } finally {
@@ -501,10 +395,10 @@ loginForm.addEventListener("submit", e => {
       SoundManager.startBackgroundMusic();
       setTimeout(() => { sidebar.style.transition = ""; }, 50);
     });
-    addNotification(`Inicio de sesión exitoso para: ${email}`, "general");
+    addNotification(`Inicio de sesión exitoso para: ${email}`, "general", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
   })
   .catch(err => {
-    addNotification(`Error de inicio de sesión: ${err.message}`, "auth");
+    addNotification(`Error de inicio de sesión: ${err.message}`, "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
   });
 });
 
@@ -578,7 +472,6 @@ function displayInitialMinion(iso){
     return;
   }
   const b = tLayer.getBounds();
-  map.fitBounds(b);
   const c = b.getCenter();
   esbirroMarker = L.marker(c, { icon: welcomeIcon }).addTo(map);
   esbirroMarker._icon.classList.add("marker-appear-animation");
@@ -747,7 +640,7 @@ function renderUpgrades(){
 /* Funciones de compra de mejoras */
 async function buyMoneyUpgrade(u){
   const c = costOf(u);
-  if(gameState.playerMoney < c) return addNotification("No tienes suficiente dinero.","notEnoughMoney");
+  if(gameState.playerMoney < c) return addNotification("No tienes suficiente dinero.", "notEnoughMoney", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
   gameState.playerMoney -= c;
   u.times++;
   gameState.totalMoneyUpgradesSec += (u.effectMoneySec || 0);
@@ -760,7 +653,7 @@ async function buyMoneyUpgrade(u){
 
 async function buyEsbirrosUpgrade(u){
   const c = costOf(u);
-  if(gameState.playerMoney < c) return addNotification("No tienes suficiente dinero.","notEnoughMoney");
+  if(gameState.playerMoney < c) return addNotification("No tienes suficiente dinero.", "notEnoughMoney", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
   gameState.playerMoney -= c;
   u.times++;
   gameState.totalEsbirrosUpgrades += (u.effectEsb || 0);
@@ -774,7 +667,7 @@ async function buyEsbirrosUpgrade(u){
 
 async function buyPoliceUpgrade(u){
   const c = costOf(u);
-  if(gameState.playerMoney < c) return addNotification("No tienes suficiente dinero.","notEnoughMoney");
+  if(gameState.playerMoney < c) return addNotification("No tienes suficiente dinero.", "notEnoughMoney", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
   gameState.playerMoney -= c;
   u.times++;
   if(u.effectStarsReduction){
@@ -791,7 +684,7 @@ async function buyPoliceUpgrade(u){
 
 async function buyWeaponUpgrade(u){
   const c = costOf(u);
-  if(gameState.playerMoney < c) return addNotification("No tienes suficiente dinero.","notEnoughMoney");
+  if(gameState.playerMoney < c) return addNotification("No tienes suficiente dinero.", "notEnoughMoney", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
   gameState.playerMoney -= c;
   u.times++;
   if(u.id.startsWith("economic-boost")){
@@ -972,6 +865,14 @@ async function saveGame(){
 async function loadGame(uid){
   if(!uid) return;
   try {
+    // Limpiar iconos activos existentes
+    activeIcons.forEach(icon => {
+      if (map.hasLayer(icon)) {
+        map.removeLayer(icon);
+      }
+    });
+    activeIcons = [];
+    
     const s = await get(ref(database, `users/${uid}/gameState`));
     if(!s.exists()) return;
 
@@ -1001,6 +902,15 @@ async function loadGame(uid){
     SoundManager.startBackgroundMusic();
 
     if(gameState.firstSession && gameState.startCountry){
+      // Reiniciar estados de iconos
+      iconsEnabled = false;
+      moneyIconsEnabled = false;
+      esbirrosIconsEnabled = false;
+      policeIconsEnabled = false;
+      iconMoneyInfo.classList.add("hidden");
+      iconEsbirrosInfo.classList.add("hidden");
+      iconPoliceInfo.classList.add("hidden");
+      
       displayInitialMinion(gameState.startCountry);
     } else {
       iconsEnabled = true;
@@ -1011,12 +921,12 @@ async function loadGame(uid){
       iconEsbirrosInfo.classList.remove("hidden");
       iconPoliceInfo.classList.remove("hidden");
     }
-    authContainer.classList.add("hidden");
+    
     statsBanner.classList.remove("hidden");
 
   } catch (error) {
     console.error("Error loading game:", error);
-    addNotification("Error al cargar partida.","auth");
+    addNotification("Error al cargar partida.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
   }
 }
 
@@ -1070,7 +980,7 @@ function expandFromCountry(i){
           arrestedTotal: 0,
           esbirros: 1
         };
-        addNotification(`¡Te has expandido a ${nf.properties.name || newIso}!`,"expansion");
+        addNotification(`¡Te has expandido a ${nf.properties.name || newIso}!`, "expansion", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
         animateExpansion(newIso);
         renderWorldList();
         SoundManager.playExpansion();
@@ -1354,7 +1264,7 @@ function checkGameOver(){
   const controlledCountries = Object.keys(gameState.countryStatus).filter(iso => gameState.countryStatus[iso].dominated);
   const allCountriesControlled = allCountries.length === controlledCountries.length;
   if(allCountriesControlled){
-    addNotification("¡Has dominado el mundo entero! Fin del juego.","gameResult");
+    addNotification("¡Has dominado el mundo entero! Fin del juego.", "gameResult", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
     SoundManager.playGameOver();
     return true;
   }
@@ -1369,7 +1279,7 @@ function checkGameOver(){
     }
   }
   if((arrestedPopulation / totalPopulation) * 100 >= POPULATION_CONTROL_GAME_OVER_THRESHOLD && totalPopulation>0){
-    addNotification("¡GAME OVER! La policía domina el 51% de la población mundial.","gameResult");
+    addNotification("¡GAME OVER! La policía domina el 51% de la población mundial.", "gameResult", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
     SoundManager.playGameOver();
     return true;
   }
@@ -1417,7 +1327,7 @@ setInterval(() => {
 
     if(st.control >= 100 && !st.dominated){
       st.dominated = true;
-      addNotification("¡Has dominado","countryConquered", st.countryName);
+      addNotification("¡Has dominado", "countryConquered", st.countryName, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
       increaseStarsWithResistance(15);
     }
     totalEsbirrosInGame += (st.esbirros || 0);
@@ -1436,7 +1346,7 @@ setInterval(() => {
     return;
   }
   if(totalEsbirrosInGame <= 0){
-    addNotification("¡GAME OVER! Todos tus esbirros han sido arrestados.","gameResult");
+    addNotification("¡GAME OVER! Todos tus esbirros han sido arrestados.", "gameResult", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
     SoundManager.playGameOver();
     gameState.gameActive = false;
     stopNewsGeneration();
@@ -1455,10 +1365,11 @@ setInterval(() => {
   saveGame();
 }, 200);
 
-/* Quitamos generateNewsUpdate() vacío, si no hace nada */
+
+
 function startNewsGeneration(){
   if(!newsInterval){
-    newsInterval = setInterval(() => {/* si quieres noticias periódicas, añade lógica aquí */}, 300000);
+    newsInterval = setInterval(() => {}, 300000);
   }
 }
 function stopNewsGeneration(){
@@ -1711,6 +1622,108 @@ newGameBtn.addEventListener("click", () => {
   });
 });
 
+newGameForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  
+  const bName = newGameBandName.value;
+  const lName = newGameLeaderName.value;
+  const sCountry = newGameStartCountry.value;
+  const lImg = newGameLeaderList.querySelector(".leader-card.selected .leader-card-image")?.getAttribute("src");
+
+  if (!lImg) {
+    addNotification("Selecciona un líder.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+    return;
+  }
+  if (!sCountry) {
+    addNotification("Selecciona un país de inicio.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+    return;
+  }
+
+  try {
+    // Limpiar iconos activos existentes
+    activeIcons.forEach(icon => {
+      if (map.hasLayer(icon)) {
+        map.removeLayer(icon);
+      }
+    });
+    activeIcons = [];
+    
+    // Reiniciar el estado del juego
+    const initGame = { ...defaultGameState };
+    Object.assign(initGame, {
+      bandName: bName,
+      startCountry: countriesData.features.find(f => f.id === sCountry)?.properties?.name || sCountry,
+      leaderName: lName,
+      leaderImage: lImg,
+      currentIso: sCountry,
+      gameActive: true,
+      firstSession: true,
+      countryStatus: {
+        [sCountry]: {
+          countryName: countriesData.features.find(f => f.id === sCountry)?.properties?.name || sCountry,
+          popReal: getPopulationFromFeature(sCountry),
+          control: 100,
+          dominated: true,
+          arrestedTotal: 0,
+          esbirros: 1
+        }
+      }
+    });
+
+    // Guardar el currentUser temporalmente y eliminarlo del objeto a guardar
+    const currentUser = gameState.currentUser;
+    
+    // Actualizar el estado del juego
+    gameState = { ...initGame, currentUser };
+    
+    // Crear objeto para guardar sin currentUser
+    const toSave = { ...initGame };
+    delete toSave.currentUser;
+    
+    // Guardar en la base de datos
+    await set(ref(database, `users/${currentUser.uid}/gameState`), toSave);
+    
+    // Reiniciar la interfaz
+    moneyUpgrades.forEach(u => u.times = 0);
+    esbirrosUpgrades.forEach(u => u.times = 0);
+    policeUpgrades.forEach(u => u.times = 0);
+    clickInvestments.forEach(u => u.times = 0);
+    militaryInvestments.forEach(u => u.times = 0);
+    socialInvestments.forEach(u => u.times = 0);
+
+    // Reiniciar estados de iconos
+    iconsEnabled = false;
+    moneyIconsEnabled = false;
+    esbirrosIconsEnabled = false;
+    policeIconsEnabled = false;
+    iconMoneyInfo.classList.add("hidden");
+    iconEsbirrosInfo.classList.add("hidden");
+    iconPoliceInfo.classList.add("hidden");
+
+    // Limpiar notificaciones y reiniciar el juego
+    notificationContainer.innerHTML = '';
+    hidePopup(newGamePopup);
+    
+    // Reiniciar el juego
+    recalcPoliceStarsFromValue(0);
+    updatePerSecondStats();
+    renderStats();
+    renderUpgrades();
+    renderInvestments();
+    refreshGeoStyle();
+    startGame();
+    
+    // Mostrar el minion inicial
+    displayInitialMinion(sCountry);
+    
+    addNotification("¡Nueva partida iniciada!", "general", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+    
+  } catch (error) {
+    console.error("Error al iniciar nueva partida:", error);
+    addNotification("Error al iniciar nueva partida.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+  }
+});
+
 privacyPolicyBtn.addEventListener("click", () => {
   flipAndShowPopup(privacyPolicyPopup);
 });
@@ -1750,108 +1763,8 @@ logoutBtn.addEventListener("click", async () => {
     await logout();
     hidePopup(settingsPopup);
     SoundManager.stopBackgroundMusic();
-    addNotification("Has cerrado sesión correctamente", "auth");
+    addNotification("Has cerrado sesión correctamente", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
   } catch (error) {
-    addNotification("Error al cerrar sesión", "auth");
+    addNotification("Error al cerrar sesión", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
   }
-});
-
-/* Registro */
-registerForm.addEventListener("submit", async e => {
-  e.preventDefault();
-  registerButton.disabled = true;
-  addNotification("Registrando y comenzando partida...", "loading");
-
-  const email = registerEmailInput.value;
-  const pass = registerPasswordInput.value;
-  const conf = registerPasswordConfirmInput.value;
-  const bName = registerBandNameInput.value;
-  const sCountry = registerStartCountryInput.value;
-  const lName = registerLeaderNameInput.value;
-  const lImg = document.querySelector(".leader-card.selected .leader-card-image")?.getAttribute("src");
-
-  if (pass !== conf) {
-    addNotification("Las contraseñas no coinciden.", "auth");
-    registerButton.disabled = false;
-    return;
-  }
-  if (!lImg) {
-    addNotification("Selecciona un líder.", "auth");
-    registerButton.disabled = false;
-    return;
-  }
-  if (!sCountry) {
-    addNotification("Selecciona un país de inicio.", "auth");
-    registerButton.disabled = false;
-    return;
-  }
-
-  gameState.bandName = bName;
-  gameState.startCountry = countriesData.features.find(f => f.id === sCountry)?.properties?.name || sCountry;
-  gameState.leaderName = lName;
-  gameState.leaderImage = lImg;
-
-  try {
-    const u = await register(email, pass);
-    const initGame = { ...defaultGameState };
-    Object.assign(initGame, {
-      bandName: bName,
-      startCountry: gameState.startCountry,
-      leaderName: lName,
-      leaderImage: lImg,
-      currentIso: sCountry,
-      gameActive: true,
-      firstSession: true,
-      countryStatus: {
-        [sCountry]: {
-          countryName: gameState.startCountry,
-          popReal: getPopulationFromFeature(sCountry),
-          control: 100,
-          dominated: true,
-          arrestedTotal: 0,
-          esbirros: 1
-        }
-      }
-    });
-    await set(ref(database, `users/${u.uid}/gameState`), initGame);
-    await loadGame(u.uid);
-    SoundManager.startBackgroundMusic();
-    addNotification(`Registro exitoso para: ${email}`, "general");
-    authContainer.classList.add("hidden");
-    sidebar.classList.remove("active");
-    sidebar.style.transition = "none";
-    document.body.classList.remove("auth-active");
-    statsBanner.classList.remove("hidden");
-    setTimeout(() => { sidebar.style.transition = ""; }, 50);
-    displayInitialMinion(sCountry);
-  } catch (err){
-    addNotification(`Error de registro: ${err.message}`, "auth");
-    console.error("Error de registro:", err);
-    registerButton.disabled = false;
-  } finally {
-    registerButton.disabled = false;
-  }
-});
-
-/* Login */
-loginForm.addEventListener("submit", e => {
-  e.preventDefault();
-  const email = loginEmailInput.value;
-  const pass = loginPasswordInput.value;
-  login(email, pass)
-  .then(u => {
-    sidebar.classList.remove("active");
-    sidebar.style.transition = "none";
-    document.body.classList.remove("auth-active");
-    authContainer.classList.add("hidden");
-    statsBanner.classList.remove("hidden");
-    loadGame(u.uid).then(() => {
-      SoundManager.startBackgroundMusic();
-      setTimeout(() => { sidebar.style.transition = ""; }, 50);
-    });
-    addNotification(`Inicio de sesión exitoso para: ${email}`, "general");
-  })
-  .catch(err => {
-    addNotification(`Error de inicio de sesión: ${err.message}`, "auth");
-  });
 });
