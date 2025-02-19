@@ -1103,23 +1103,214 @@ body.sidebar-active #notificationContainer {
 }
 
 .auth-form {
-  padding: 12px;
-  background-color: #222;
-  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 1.5rem;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  max-width: 350px;
+  width: 90%;
+  margin: 0 auto;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
-.auth-form input[type="email"],
-.auth-form input[type="password"],
-.auth-form input[type="text"],
-.auth-form select {
-  margin-bottom: 6px;
-  padding: 5px;
-  width: calc(100% - 10px);
+.auth-title {
   color: #fff;
-  background-color: #333;
-  border: none;
-  border-radius: 3px;
+  text-align: center;
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.input-group {
+  margin-bottom: 1rem;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.input-group input,
+.input-group select {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  max-width: 100%;
   box-sizing: border-box;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 10px rgba(74, 144, 226, 0.3);
+}
+
+/* Estilos para el select de países */
+.input-group select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1.2rem;
+  padding-right: 2rem;
+}
+
+/* Estilos para el contenedor de búsqueda de países */
+.country-search-container {
+  position: relative;
+}
+
+.country-search-input {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+.country-list-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  z-index: 1000;
+  display: none;
+}
+
+.country-list-dropdown.active {
+  display: block;
+}
+
+.country-list-item {
+  padding: 0.5rem;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.country-list-item:hover {
+  background-color: rgba(74, 144, 226, 0.2);
+}
+
+.game-button {
+  width: 100%;
+  padding: 0.8rem;
+  margin: 0.4rem 0;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(45deg, #4a90e2, #357abd);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.game-button:hover {
+  background: linear-gradient(45deg, #357abd, #4a90e2);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.game-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.auth-links {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #4a90e2;
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0.4rem;
+  transition: all 0.3s ease;
+  text-decoration: underline;
+}
+
+.link-button:hover {
+  color: #357abd;
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .auth-form {
+    padding: 1.2rem;
+    width: 95%;
+    max-height: 80vh;
+  }
+
+  .auth-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .game-button {
+    padding: 0.7rem;
+  }
+
+  .input-group {
+    margin-bottom: 0.8rem;
+  }
+}
+
+/* Validación de campos */
+.input-group input:invalid,
+.input-group select:invalid {
+  border-color: #ff4d4d;
+}
+
+.input-group .error-message {
+  color: #ff4d4d;
+  font-size: 0.75rem;
+  margin-top: 0.2rem;
+  display: none;
+}
+
+.input-group input:invalid + .error-message {
+  display: block;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-form {
+  animation: fadeIn 0.5s ease-out;
 }
 
 #login-form-container,

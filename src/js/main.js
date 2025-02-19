@@ -1,7 +1,7 @@
 // src/js/main.js
 import { moneyUpgrades, esbirrosUpgrades, policeUpgrades, clickInvestments, militaryInvestments, socialInvestments } from "./upgrades.js"
 import { generateWelcomeMessage, generateMoneyNews, generateEsbirrosNews, generatePoliceNews } from "./ia.js"
-import { initializeAuth, logout, register, login } from "./auth.js"
+import { initializeAuth, logout, register, login, loginWithGoogle, resetPassword } from "./auth.js"
 import { database, ref, set, get } from "./firebase-config.js"
 import { generateMoneyParticles } from "./particles.js"
 import SoundManager from "./sounds.js"
@@ -271,25 +271,58 @@ function updatePoliceNotification(){
 }
 
 let handleAuthStateChangedTimeout;
-function handleAuthStateChanged(u) {
+async function handleAuthStateChanged(u) {
   if (handleAuthStateChangedTimeout) {
     clearTimeout(handleAuthStateChangedTimeout);
   }
-  handleAuthStateChangedTimeout = setTimeout(() => {
+  handleAuthStateChangedTimeout = setTimeout(async () => {
     gameState.currentUser = u;
     if (u) {
+      // Verificar si el usuario tiene datos en la base de datos
+      const gameData = await get(ref(database, `users/${u.uid}/gameState`));
+      
+      if (!gameData.exists()) {
+        // Si no tiene datos y viene de Google, mostrar el formulario de registro
+        if (u.providerData[0]?.providerId === 'google.com') {
+          document.body.classList.add("auth-active");
+          authContainer.classList.remove("hidden");
+          loginFormContainer.classList.add("hidden");
+          registerFormContainer.classList.remove("hidden");
+          
+          // Limpiar los campos de email y contraseña
+          registerEmailInput.value = u.email;
+          registerEmailInput.disabled = true;
+          registerPasswordInput.required = false;
+          registerPasswordInput.parentElement.style.display = "none";
+          
+          // Cambiar el botón de registro
+          const registerSubmitButton = registerForm.querySelector('button[type="submit"]');
+          registerSubmitButton.textContent = "Comenzar Juego";
+          
+          // Ocultar el botón de Google
+          googleRegisterButton.style.display = "none";
+          return;
+        }
+      }
+      
+      // Pre-cargar el statsbanner antes de mostrar
+      statsBanner.style.opacity = '0';
+      statsBanner.classList.remove("hidden");
+      
+      // Si tiene datos o no es de Google, proceder normalmente
       document.body.classList.remove("auth-active");
       authContainer.classList.add("hidden");
-      statsBanner.classList.remove("hidden");
-      sidebar.classList.remove("active");
-      sidebar.style.transition = "none";
-      setTimeout(() => { sidebar.style.transition = ""; }, 50);
-      loadGame(u.uid);
+      
+      await loadGame(u.uid);
+      
+      // Mostrar el statsbanner con una transición suave
+      setTimeout(() => {
+          statsBanner.style.transition = 'opacity 0.3s ease-in-out';
+          statsBanner.style.opacity = '1';
+      }, 100);
     } else {
-      document.body.classList.add("auth-active");
-      authContainer.classList.remove("hidden");
       statsBanner.classList.add("hidden");
-      sidebar.classList.remove("active");
+      // ... existing code ...
     }
   }, 200);
 }
@@ -305,40 +338,56 @@ window.addEventListener("beforeunload", () => {
 /* Registro */
 registerForm.addEventListener("submit", async e => {
   e.preventDefault();
+  
+  if (!validateForm(registerForm)) {
+    addNotification("Por favor, corrige los errores en el formulario", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+    return;
+  }
+  
   registerButton.disabled = true;
   addNotification("Registrando y comenzando partida...", "loading", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
 
-  const email = registerEmailInput.value;
-  const pass = registerPasswordInput.value;
-  const conf = registerPasswordConfirmInput.value;
-  const bName = registerBandNameInput.value;
-  const sCountry = registerStartCountryInput.value;
-  const lName = registerLeaderNameInput.value;
-  const lImg = document.querySelector(".leader-card.selected .leader-card-image")?.getAttribute("src");
-
-  if (pass !== conf) {
-    addNotification("Las contraseñas no coinciden.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
-    registerButton.disabled = false;
-    return;
-  }
-  if (!lImg) {
-    addNotification("Selecciona un líder.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
-    registerButton.disabled = false;
-    return;
-  }
-  if (!sCountry) {
-    addNotification("Selecciona un país de inicio.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
-    registerButton.disabled = false;
-    return;
-  }
-
-  gameState.bandName = bName;
-  gameState.startCountry = countriesData.features.find(f => f.id === sCountry)?.properties?.name || sCountry;
-  gameState.leaderName = lName;
-  gameState.leaderImage = lImg;
-
   try {
-    const u = await register(email, pass);
+    let user = gameState.currentUser;
+    
+    // Si no hay usuario actual (registro normal) hacer el registro
+    if (!user) {
+      const email = registerEmailInput.value;
+      const pass = registerPasswordInput.value;
+      if (!pass && !user) {
+        addNotification("La contraseña es obligatoria para el registro normal.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+        registerButton.disabled = false;
+        return;
+      }
+      user = await register(email, pass);
+    }
+
+    const bName = registerBandNameInput.value;
+    const sCountry = registerStartCountryInput.value;
+    const lName = registerLeaderNameInput.value;
+    const lImg = document.querySelector(".leader-card.selected .leader-card-image")?.getAttribute("src");
+
+    if (!lImg) {
+      addNotification("Selecciona un líder.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+      registerButton.disabled = false;
+      return;
+    }
+    if (!sCountry) {
+      addNotification("Selecciona un país de inicio.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+      registerButton.disabled = false;
+      return;
+    }
+    if (!bName || !lName) {
+      addNotification("Todos los campos son obligatorios.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+      registerButton.disabled = false;
+      return;
+    }
+
+    gameState.bandName = bName;
+    gameState.startCountry = countriesData.features.find(f => f.id === sCountry)?.properties?.name || sCountry;
+    gameState.leaderName = lName;
+    gameState.leaderImage = lImg;
+
     const initGame = { ...defaultGameState };
     Object.assign(initGame, {
       bandName: bName,
@@ -359,10 +408,11 @@ registerForm.addEventListener("submit", async e => {
         }
       }
     });
-    await set(ref(database, `users/${u.uid}/gameState`), initGame);
-    await loadGame(u.uid);
+
+    await set(ref(database, `users/${user.uid}/gameState`), initGame);
+    await loadGame(user.uid);
     SoundManager.startBackgroundMusic();
-    addNotification(`Registro exitoso para: ${email}`, "general", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+    addNotification(`¡Bienvenido a Click & Conquer Tycoon!`, "general", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
     authContainer.classList.add("hidden");
     sidebar.classList.remove("active");
     sidebar.style.transition = "none";
@@ -370,18 +420,23 @@ registerForm.addEventListener("submit", async e => {
     statsBanner.classList.remove("hidden");
     setTimeout(() => { sidebar.style.transition = ""; }, 50);
     displayInitialMinion(sCountry);
-  } catch (err){
+  } catch (err) {
     addNotification(`Error de registro: ${err.message}`, "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
     console.error("Error de registro:", err);
-    registerButton.disabled = false;
   } finally {
     registerButton.disabled = false;
   }
 });
 
 /* Login */
-loginForm.addEventListener("submit", e => {
+loginForm.addEventListener("submit", async e => {
   e.preventDefault();
+  
+  if (!validateForm(loginForm)) {
+    addNotification("Por favor, corrige los errores en el formulario", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+    return;
+  }
+  
   const email = loginEmailInput.value;
   const pass = loginPasswordInput.value;
   login(email, pass)
@@ -1768,3 +1823,253 @@ logoutBtn.addEventListener("click", async () => {
     addNotification("Error al cerrar sesión", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
   }
 });
+
+// Elementos del DOM para autenticación
+const forgotPasswordContainer = document.getElementById("forgot-password-container");
+const forgotPasswordForm = document.getElementById("forgot-password-form");
+const forgotPasswordEmail = document.getElementById("forgot-password-email");
+const backToLoginButton = document.getElementById("back-to-login");
+const googleLoginButton = document.getElementById("google-login");
+const googleRegisterButton = document.getElementById("google-register");
+const forgotPasswordButton = document.getElementById("forgot-password");
+
+// Mostrar formulario de recuperación de contraseña
+forgotPasswordButton.addEventListener("click", () => {
+  loginFormContainer.classList.add("hidden");
+  registerFormContainer.classList.add("hidden");
+  forgotPasswordContainer.classList.remove("hidden");
+  SoundManager.playButtonClick();
+});
+
+// Volver al login desde recuperación de contraseña
+backToLoginButton.addEventListener("click", () => {
+  forgotPasswordContainer.classList.add("hidden");
+  loginFormContainer.classList.remove("hidden");
+  SoundManager.playButtonClick();
+});
+
+// Enviar email de recuperación de contraseña
+forgotPasswordForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  
+  if (!validateForm(forgotPasswordForm)) {
+    addNotification("Por favor, introduce un email válido", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+    return;
+  }
+  
+  const email = forgotPasswordEmail.value;
+  
+  try {
+    await resetPassword(email);
+    addNotification("Se ha enviado un email de recuperación a tu correo", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+    forgotPasswordContainer.classList.add("hidden");
+    loginFormContainer.classList.remove("hidden");
+  } catch (error) {
+    addNotification(`Error al enviar email de recuperación: ${error.message}`, "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+  }
+});
+
+// Login con Google
+googleLoginButton.addEventListener("click", async () => {
+  try {
+    const user = await loginWithGoogle();
+    gameState.currentUser = user;
+    
+    // La lógica de verificación de datos y mostrar formulario
+    // ahora está en handleAuthStateChanged
+  } catch (error) {
+    addNotification(`Error al iniciar sesión con Google: ${error.message}`, "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+  }
+});
+
+// Registro con Google
+googleRegisterButton.addEventListener("click", async () => {
+  try {
+    const user = await loginWithGoogle();
+    gameState.currentUser = user;
+    
+    // La lógica de verificación de datos y mostrar formulario
+    // ahora está en handleAuthStateChanged
+  } catch (error) {
+    addNotification(`Error al registrarse con Google: ${error.message}`, "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+  }
+});
+
+// Actualizar el registro existente
+registerForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  
+  if (!validateForm(registerForm)) {
+    addNotification("Por favor, corrige los errores en el formulario", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+    return;
+  }
+  
+  registerButton.disabled = true;
+  addNotification("Registrando y comenzando partida...", "loading", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+
+  const email = registerEmailInput.value;
+  const pass = registerPasswordInput.value;
+  const bName = registerBandNameInput.value;
+  const sCountry = registerStartCountryInput.value;
+  const lName = registerLeaderNameInput.value;
+  const lImg = document.querySelector(".leader-card.selected .leader-card-image")?.getAttribute("src");
+
+  if (!lImg) {
+    addNotification("Selecciona un líder.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+    registerButton.disabled = false;
+    return;
+  }
+  if (!sCountry) {
+    addNotification("Selecciona un país de inicio.", "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+    registerButton.disabled = false;
+    return;
+  }
+
+  gameState.bandName = bName;
+  gameState.startCountry = countriesData.features.find(f => f.id === sCountry)?.properties?.name || sCountry;
+  gameState.leaderName = lName;
+  gameState.leaderImage = lImg;
+
+  try {
+    const u = await register(email, pass);
+    const initGame = { ...defaultGameState };
+    Object.assign(initGame, {
+      bandName: bName,
+      startCountry: gameState.startCountry,
+      leaderName: lName,
+      leaderImage: lImg,
+      currentIso: sCountry,
+      gameActive: true,
+      firstSession: true,
+      countryStatus: {
+        [sCountry]: {
+          countryName: gameState.startCountry,
+          popReal: getPopulationFromFeature(sCountry),
+          control: 100,
+          dominated: true,
+          arrestedTotal: 0,
+          esbirros: 1
+        }
+      }
+    });
+    await set(ref(database, `users/${u.uid}/gameState`), initGame);
+    await loadGame(u.uid);
+    SoundManager.startBackgroundMusic();
+    addNotification(`Registro exitoso para: ${email}`, "general", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+    authContainer.classList.add("hidden");
+    sidebar.classList.remove("active");
+    sidebar.style.transition = "none";
+    document.body.classList.remove("auth-active");
+    statsBanner.classList.remove("hidden");
+    setTimeout(() => { sidebar.style.transition = ""; }, 50);
+    displayInitialMinion(sCountry);
+  } catch (err) {
+    addNotification(`Error de registro: ${err.message}`, "auth", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
+    console.error("Error de registro:", err);
+    registerButton.disabled = false;
+  } finally {
+    registerButton.disabled = false;
+  }
+});
+
+// Validación de formularios y buscador de países
+const countrySearchInput = document.getElementById("country-search");
+const countryListDropdown = document.querySelector(".country-list-dropdown");
+const registerStartCountryHidden = document.getElementById("register-start-country");
+
+// Función para filtrar países
+function filterCountries(searchText) {
+  return countriesData.features.filter(country => 
+    country.properties.name.toLowerCase().includes(searchText.toLowerCase())
+  );
+}
+
+// Función para renderizar la lista de países
+function renderCountryList(countries) {
+  countryListDropdown.innerHTML = "";
+  countries.forEach(country => {
+    const item = document.createElement("div");
+    item.className = "country-list-item";
+    item.textContent = country.properties.name;
+    item.dataset.countryId = country.id;
+    item.addEventListener("click", () => {
+      countrySearchInput.value = country.properties.name;
+      registerStartCountryHidden.value = country.id;
+      countryListDropdown.classList.remove("active");
+      validateField(registerStartCountryHidden);
+    });
+    countryListDropdown.appendChild(item);
+  });
+}
+
+// Eventos para el buscador de países
+countrySearchInput.addEventListener("focus", () => {
+  const countries = filterCountries(countrySearchInput.value);
+  renderCountryList(countries);
+  countryListDropdown.classList.add("active");
+});
+
+countrySearchInput.addEventListener("input", () => {
+  const countries = filterCountries(countrySearchInput.value);
+  renderCountryList(countries);
+  countryListDropdown.classList.add("active");
+});
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".country-search-container")) {
+    countryListDropdown.classList.remove("active");
+  }
+});
+
+// Validación de campos
+function validateField(field) {
+  const errorMessage = field.parentElement.querySelector(".error-message");
+  let isValid = true;
+  
+  if (field.hasAttribute("required") && !field.value) {
+    errorMessage.style.display = "block";
+    isValid = false;
+  } else if (field.type === "email" && field.value) {
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailPattern.test(field.value)) {
+      errorMessage.style.display = "block";
+      isValid = false;
+    }
+  } else if (field.id === "register-band-name" || field.id === "register-leader-name") {
+    const namePattern = /^[A-Za-zÀ-ÿ0-9\s]{3,20}$/;
+    if (!namePattern.test(field.value)) {
+      errorMessage.style.display = "block";
+      isValid = false;
+    }
+  } else if (field.type === "password" && field.value.length < 6) {
+    errorMessage.style.display = "block";
+    isValid = false;
+  }
+  
+  if (isValid) {
+    errorMessage.style.display = "none";
+  }
+  
+  return isValid;
+}
+
+// Validar campos en tiempo real
+const formInputs = document.querySelectorAll("input[required], select[required]");
+formInputs.forEach(input => {
+  input.addEventListener("input", () => validateField(input));
+  input.addEventListener("blur", () => validateField(input));
+});
+
+// Validar formulario completo antes de enviar
+function validateForm(form) {
+  const fields = form.querySelectorAll("input[required], select[required]");
+  let isValid = true;
+  
+  fields.forEach(field => {
+    if (!validateField(field)) {
+      isValid = false;
+    }
+  });
+  
+  return isValid;
+}

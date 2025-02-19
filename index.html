@@ -206,15 +206,23 @@
         <form id="login-form">
           <div class="input-group">
             <label>Email:</label>
-            <input type="email" id="login-email" required>
+            <input type="email" id="login-email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$">
+            <div class="error-message">Introduce un email válido</div>
           </div>
           <div class="input-group">
             <label>Contraseña:</label>
-            <input type="password" id="login-password" required>
+            <input type="password" id="login-password" required minlength="6">
+            <div class="error-message">La contraseña debe tener al menos 6 caracteres</div>
           </div>
-          <button type="submit" class="btn">Iniciar Sesión</button>
+          <button type="submit" class="game-button">Iniciar Sesión</button>
+          <button type="button" id="google-login" class="game-button google-button">
+            <i class="fab fa-google"></i> Continuar con Google
+          </button>
+          <div class="auth-links">
+            <button type="button" id="forgot-password" class="link-button">¿Has olvidado la contraseña?</button>
+            <button type="button" id="show-register" class="link-button">¿No tienes cuenta? Regístrate</button>
+          </div>
         </form>
-        <p>¿No tienes cuenta? <button id="show-register" class="link-button">Regístrate</button></p>
       </div>
 
       <div class="auth-form hidden" id="register-form-container">
@@ -222,25 +230,32 @@
         <form id="register-form">
           <div class="input-group">
             <label>Email:</label>
-            <input type="email" id="register-email" required>
+            <input type="email" id="register-email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$">
+            <div class="error-message">Introduce un email válido</div>
           </div>
           <div class="input-group">
             <label>Contraseña:</label>
-            <input type="password" id="register-password" required>
-          </div>
-          <div class="input-group">
-            <label>Confirmar Contraseña:</label>
-            <input type="password" id="register-password-confirm" required>
+            <input type="password" id="register-password" required minlength="6">
+            <div class="error-message">La contraseña debe tener al menos 6 caracteres</div>
           </div>
           <div class="input-group">
             <label>Nombre de la Banda:</label>
-            <input type="text" id="register-band-name" placeholder="Ej: Los Fierros" required>
+            <input type="text" id="register-band-name" placeholder="Ej: Los Fierros" required maxlength="20" pattern="[A-Za-zÀ-ÿ0-9\s]{3,20}">
+            <div class="error-message">Entre 3 y 20 caracteres, solo letras, números y espacios</div>
           </div>
           <div class="input-group">
             <label>País Inicial:</label>
-            <select id="register-start-country" required>
-              <option value="">-- Elige País --</option>
-            </select>
+            <div class="country-search-container">
+              <input type="text" class="country-search-input" placeholder="Buscar país..." id="country-search">
+              <div class="country-list-dropdown"></div>
+              <input type="hidden" id="register-start-country" required>
+              <div class="error-message">Selecciona un país inicial</div>
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Nombre del Líder:</label>
+            <input type="text" id="register-leader-name" required maxlength="20" pattern="[A-Za-zÀ-ÿ\s]{3,20}">
+            <div class="error-message">Entre 3 y 20 caracteres, solo letras y espacios</div>
           </div>
           <div class="input-group">
             <label>Selecciona tu líder:</label>
@@ -256,14 +271,31 @@
                 </div>
               </div>
             </div>
+            <div class="error-message">Selecciona un líder</div>
           </div>
-          <div class="input-group">
-            <label>Nombre del Líder:</label>
-            <input type="text" id="register-leader-name" placeholder="Ejemplo: Paco" required>
+          <button type="submit" class="game-button">Registrarse</button>
+          <button type="button" id="google-register" class="game-button google-button">
+            <i class="fab fa-google"></i> Registrarse con Google
+          </button>
+          <div class="auth-links">
+            <button type="button" id="show-login" class="link-button">¿Ya tienes cuenta? Inicia sesión</button>
           </div>
-          <button type="submit" class="btn">Registrarse y Comenzar</button>
         </form>
-        <p>¿Ya tienes cuenta? <button id="show-login" class="link-button">Inicia Sesión</button></p>
+      </div>
+
+      <div class="auth-form hidden" id="forgot-password-container">
+        <h2 class="auth-title">Recuperar Contraseña</h2>
+        <form id="forgot-password-form">
+          <div class="input-group">
+            <label>Email:</label>
+            <input type="email" id="forgot-password-email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$">
+            <div class="error-message">Introduce un email válido</div>
+          </div>
+          <button type="submit" class="game-button">Enviar Email de Recuperación</button>
+          <div class="auth-links">
+            <button type="button" id="back-to-login" class="link-button">Volver al Login</button>
+          </div>
+        </form>
       </div>
     </div>
 
