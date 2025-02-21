@@ -401,10 +401,10 @@ registerForm.addEventListener("submit", async e => {
         [sCountry]: {
           countryName: gameState.startCountry,
           popReal: getPopulationFromFeature(sCountry),
-          control: 100,
-          dominated: true,
+          control: 5, // Comenzar con 5% de control para mejor visualización
+          dominated: false,
           arrestedTotal: 0,
-          esbirros: 1
+          esbirros: Math.ceil(gameState.totalEsbirrosUpgrades * 0.1) // 10% de los esbirros por segundo como base
         }
       }
     });
@@ -874,12 +874,28 @@ function refreshGeoStyle(){
   geojsonLayer.setStyle(f => {
     const i = f.id;
     const st = gameState.countryStatus[i];
-    if(!st) return { color: "#555", weight: 1, fillColor: "#f0f0f0", fillOpacity: 0.2 };
-    if(st.dominated) return { color:"#555", weight:1, fillColor:"#008000", fillOpacity:0.7 };
-    if((st.arrestedTotal||0) >= (st.popReal||1)) return { color:"#555", weight: 1, fillColor: "#000000", fillOpacity:0.8 };
-    if((st.arrestedTotal||0) > st.esbirros) return { color:"#555", weight:1, fillColor:"#0000FF", fillOpacity:0.4 };
-    if(st.control >= 50 && st.control<100) return { color:"#555", weight:1, fillColor:"#800080", fillOpacity:0.5 };
-    return { color:"#555", weight:1, fillColor:"#FF0000", fillOpacity:(st.control/100)*0.6 + 0.1 };
+    if(!st) return { color: "#333", weight: 1, fillColor: "#1a1a1a", fillOpacity: 0.2 }; // Países no descubiertos
+    
+    // País inicial con color dorado
+    if(i === gameState.currentIso) {
+      return { color:"#444", weight:2, fillColor:"#FFD700", fillOpacity:0.6 }; // Dorado para país inicial
+    }
+    
+    if(st.dominated) return { color:"#444", weight:2, fillColor:"#FF4500", fillOpacity:0.7 }; // Naranja rojizo para dominación
+    if((st.arrestedTotal||0) >= (st.popReal||1)) return { color:"#444", weight:2, fillColor: "#8B0000", fillOpacity:0.8 }; // Rojo oscuro para países perdidos
+    if((st.arrestedTotal||0) > st.esbirros) return { color:"#444", weight:2, fillColor:"#4169E1", fillOpacity:0.6 }; // Azul real para presencia policial fuerte
+    
+    // Gradiente de control basado en el porcentaje usando tonos rojizos
+    const controlPercent = st.control || 0;
+    if(controlPercent >= 75) {
+      return { color:"#444", weight:2, fillColor:"#FF6347", fillOpacity:0.7 }; // Rojo tomate para alto control
+    } else if(controlPercent >= 50) {
+      return { color:"#444", weight:2, fillColor:"#CD5C5C", fillOpacity:0.6 }; // Rojo indio para control medio
+    } else if(controlPercent >= 25) {
+      return { color:"#444", weight:2, fillColor:"#BC8F8F", fillOpacity:0.5 }; // Rosado rojizo para control bajo
+    } else {
+      return { color:"#444", weight:2, fillColor:"#DEB887", fillOpacity:0.4 }; // Marrón claro para presencia inicial
+    }
   });
 }
 
@@ -1003,22 +1019,28 @@ function getNeighbors(i){
 function expandFromCountry(i){
   const st = gameState.countryStatus[i];
   if(!st || st.control < 20) return;
+  
+  // Probabilidad base mejorada para el early game
   let prob = BASE_EXPANSION_PROBABILITY * (1 + (st.esbirros / st.popReal)) * gameState.expansionProbabilityMultiplier;
 
-  if(st.control >= 20) prob *= 1;
-  if(st.control >= 50) prob *= 3;
-  if(st.control >= 90) prob *= 5;
-  if(st.control === 100) prob = 0.05;
+  // Bonificación para el país inicial en early game
+  if(i === gameState.startCountry && Date.now() - gameState.gameStartTime < 300000) {
+    prob *= 2; // Doble probabilidad en los primeros 5 minutos
+  }
 
-  prob = gameState.startingCountryExpansionMultiplier;
+  if(st.control >= 20) prob *= 1.5;
+  if(st.control >= 50) prob *= 2;
+  if(st.control >= 90) prob *= 3;
+  if(st.control === 100) prob *= 0.5;
+
+  prob = Math.min(prob * gameState.startingCountryExpansionMultiplier, 0.15); // Cap máximo de 15%
+  
   const dominatedCount = Object.keys(gameState.countryStatus).filter(k => gameState.countryStatus[k].dominated || gameState.countryStatus[k].control>=50).length;
   const penaltyFactor = 1 + (Math.max(0, dominatedCount-2) * EXPANSION_DIFFICULTY_FACTOR);
   prob /= penaltyFactor;
-  if(prob < 0.0005) prob = 0.0005;
-  if(prob > 0.1) prob = 0.1;
-
+  
   if(Math.random() < prob){
-    const exp = Math.random() < 0.7 ? 1 : 2;
+    const exp = Math.random() < 0.8 ? 1 : 2; // 80% chance de expandir a 1 país, 20% a 2
     let possible = getNeighbors(i).filter(x => !gameState.countryStatus[x]);
     possible.sort(() => Math.random() - 0.5);
 
@@ -1027,48 +1049,157 @@ function expandFromCountry(i){
       const newIso = possible[k];
       const nf = countriesData.features.find(ff => ff.id===newIso);
       if(nf){
+        // Animación de expansión mejorada
+        animateExpansion(i, newIso);
+        
         gameState.countryStatus[newIso] = {
           countryName: nf.properties.name || newIso,
           popReal: nf.properties.population || 0,
-          control: 0,
+          control: 5, // Comenzar con 5% de control para mejor visualización
           dominated: false,
           arrestedTotal: 0,
-          esbirros: 1
+          esbirros: Math.ceil(gameState.totalEsbirrosUpgrades * 0.1) // 10% de los esbirros por segundo como base
         };
-        addNotification(`¡Te has expandido a ${nf.properties.name || newIso}!`, "expansion", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
-        animateExpansion(newIso);
-        renderWorldList();
+        
+        // Notificación de expansión
+        const message = `¡Tu banda se ha expandido a ${nf.properties.name || newIso}!`;
+        addNotification(message, "expansion", null, gameState, notificationContainer, conqueredCountriesNotification, SoundManager);
         SoundManager.playExpansion();
       }
     }
+    refreshGeoStyle();
   }
 }
 
-function animateExpansion(i){
+function animateExpansion(fromIso, toIso) {
   if(!geojsonLayer) return;
+  
+  let fromLayer, toLayer;
   geojsonLayer.eachLayer(l => {
-    if(l.feature?.id !== i) return;
-    const orig = { color:"#555", weight:1, fillColor:"#FF0000", fillOpacity:0.2 };
-    const anim = { color:"#555", weight:2, fillColor:"#800080", fillOpacity:0.7 };
-    l.setStyle(anim);
-    const b = l.getBounds();
-    const c = b.getCenter();
-    const circle = L.circleMarker(c, { radius:10, color:"white", weight:3, fillOpacity:0 }).addTo(map);
-    let r = 10;
-    const interval = setInterval(() => {
-      r += EXPANSION_ANIMATION_CIRCLE_RADIUS_INCREMENT;
-      circle.setRadius(r);
-      circle.setStyle({ opacity: Math.max(0, 1 - r/EXPANSION_ANIMATION_CIRCLE_MAX_RADIUS) });
-      if(r >= EXPANSION_ANIMATION_CIRCLE_MAX_RADIUS){
-        clearInterval(interval);
-        map.removeLayer(circle);
-      }
-    }, EXPANSION_ANIMATION_INTERVAL_MS);
-    setTimeout(() => {
-      l.setStyle(orig);
-      refreshGeoStyle();
-    }, ANIMATION_DURATION);
+    if(l.feature?.id === fromIso) fromLayer = l;
+    if(l.feature?.id === toIso) toLayer = l;
   });
+  
+  if(!fromLayer || !toLayer) return;
+  
+  const fromCenter = fromLayer.getBounds().getCenter();
+  const toCenter = toLayer.getBounds().getCenter();
+  
+  // Efecto de onda expansiva en el país origen
+  const waves = [];
+  for(let i = 0; i < 3; i++) {
+    const wave = L.circleMarker(fromCenter, {
+      radius: 5,
+      color: "#FFD700",
+      fillColor: "#FFD700",
+      fillOpacity: 0.6 - (i * 0.2),
+      weight: 2,
+      className: 'expansion-wave'
+    }).addTo(map);
+    waves.push(wave);
+  }
+
+  // Animación de ondas
+  let waveRadius = 5;
+  const waveInterval = setInterval(() => {
+    waves.forEach((wave, index) => {
+      const delay = index * 10;
+      const currentRadius = waveRadius - (delay);
+      if(currentRadius > 0) {
+        wave.setRadius(currentRadius);
+        wave.setStyle({
+          fillOpacity: Math.max(0, 0.6 - (currentRadius / 40)),
+          opacity: Math.max(0, 1 - (currentRadius / 40))
+        });
+      }
+    });
+    waveRadius += 2;
+    if(waveRadius > 40) {
+      waves.forEach(wave => map.removeLayer(wave));
+      clearInterval(waveInterval);
+    }
+  }, 50);
+
+  // Efecto de destello en el país destino
+  const flash = L.circleMarker(toCenter, {
+    radius: 20,
+    color: "#FF4500",
+    fillColor: "#FF4500",
+    fillOpacity: 0,
+    weight: 3,
+    className: 'expansion-flash'
+  }).addTo(map);
+
+  // Línea de energía entre países
+  const points = [fromCenter];
+  const steps = 5;
+  for(let i = 1; i < steps; i++) {
+    const fraction = i / steps;
+    const lat = fromCenter.lat + (toCenter.lat - fromCenter.lat) * fraction;
+    const lng = fromCenter.lng + (toCenter.lng - fromCenter.lng) * fraction;
+    points.push(L.latLng(lat, lng));
+  }
+  points.push(toCenter);
+
+  const energyLine = L.polyline(points, {
+    color: "#FFD700",
+    weight: 3,
+    opacity: 0.8,
+    className: 'energy-line'
+  }).addTo(map);
+
+  // Partícula que viaja a lo largo de la línea
+  const particle = L.circleMarker(fromCenter, {
+    radius: 4,
+    color: "#FFD700",
+    fillColor: "#FFD700",
+    fillOpacity: 1,
+    weight: 0
+  }).addTo(map);
+
+  let step = 0;
+  const particleInterval = setInterval(() => {
+    step += 0.02;
+    if(step >= 1) {
+      clearInterval(particleInterval);
+      map.removeLayer(particle);
+      map.removeLayer(energyLine);
+      
+      // Efecto final de destello
+      let flashOpacity = 0.8;
+      let growing = false;
+      const flashInterval = setInterval(() => {
+        if(growing) {
+          flashOpacity += 0.1;
+          if(flashOpacity >= 0.8) growing = false;
+        } else {
+          flashOpacity -= 0.1;
+          if(flashOpacity <= 0) {
+            clearInterval(flashInterval);
+            map.removeLayer(flash);
+          }
+        }
+        flash.setStyle({ fillOpacity: flashOpacity });
+      }, 50);
+    } else {
+      const currentPoint = L.latLng(
+        fromCenter.lat + (toCenter.lat - fromCenter.lat) * step,
+        fromCenter.lng + (toCenter.lng - fromCenter.lng) * step
+      );
+      particle.setLatLng(currentPoint);
+    }
+  }, 20);
+
+  // Destacar visualmente el país destino
+  toLayer.setStyle({
+    color: "#FFD700",
+    weight: 3,
+    fillOpacity: 0.3
+  });
+
+  setTimeout(() => {
+    refreshGeoStyle();
+  }, 2000);
 }
 
 /* Lista de países en el sidebar */
@@ -1137,35 +1268,32 @@ function startGame(){
 
 /* Aparición aleatoria de íconos en el mapa */
 function spawnIcon(iconType, icon, iso) {
-  if(!iconsEnabled) return;
-  if(iconType==="money" && !moneyIconsEnabled) return;
-  if(iconType==="esbirros" && !esbirrosIconsEnabled) return;
-  if(iconType==="police" && !policeIconsEnabled) return;
-  if(!iso || !geojsonLayer) return;
+  if(!iconsEnabled) return null;
+  if(iconType==="money" && !moneyIconsEnabled) return null;
+  if(iconType==="esbirros" && !esbirrosIconsEnabled) return null;
+  if(iconType==="police" && !policeIconsEnabled) return null;
+  if(!iso || !geojsonLayer) return null;
 
   let tLayer;
   geojsonLayer.eachLayer(l => {
     if(l.feature?.id === iso) tLayer = l;
   });
-  if(!tLayer) return;
+  if(!tLayer) return null;
 
   const bounds = tLayer.getBounds();
-  const sw = bounds.getSouthWest();
-  const ne = bounds.getNorthEast();
-  const lngSpan = ne.lng - sw.lng;
-  const latSpan = ne.lat - sw.lat;
-  let tries = 50;
-
+  let tries = 10;
   while(tries > 0) {
-    const rLng = sw.lng + lngSpan * Math.random();
-    const rLat = sw.lat + latSpan * Math.random();
-    const point = L.latLng([rLat, rLng]);
-
-    const pt = turf.point([point.lng, point.lat]);
+    const lat = bounds.getSouth() + Math.random() * (bounds.getNorth() - bounds.getSouth());
+    const lng = bounds.getWest() + Math.random() * (bounds.getEast() - bounds.getWest());
+    const point = L.latLng(lat, lng);
+    const pt = turf.point([lng, lat]);
     const isInside = turf.booleanPointInPolygon(pt, tLayer.feature);
 
     if(isInside) {
-      const marker = L.marker(point, { icon });
+      const marker = L.marker(point, { 
+        icon,
+        className: `game-icon ${iconType}-icon`
+      });
 
       const pointerPoint = map.latLngToContainerPoint(point);
       const pointerLatLng = map.containerPointToLatLng(
@@ -1175,82 +1303,83 @@ function spawnIcon(iconType, icon, iso) {
       
       if(turf.booleanPointInPolygon(pointerPt, tLayer.feature)) {
         marker.on("click", () => {
-          if(iconType === "money") {
-            const moneyGain = gameState.moneyPerSecond * 10;
-            generateMoneyNews(
-              { bandName: gameState.bandName, leaderName: gameState.leaderName },
-              gameState.countryStatus[iso]?.countryName || iso
-            ).then((newsContent) => {
-              showNewsPopup(newsContent, "¡Hallazgo inesperado!", "money");
-              animateBonusRewardInNews(moneyGain, "money", 2000, () => {
-                gameState.playerMoney += moneyGain;
-                renderStats();
-                saveGame();
-                createAnimation(bannerMoneyElement, moneyGain, "money");
-                SoundManager.playMoneyEarned();
-              });
-            });
-          } else if(iconType === "esbirros") {
-            const st = gameState.countryStatus[iso];
-            if(st) {
-              const maxEsbirros = st.popReal - st.arrestedTotal;
-              if(maxEsbirros <= 0 || st.control === 100) {
-                map.removeLayer(marker);
-                activeIcons = activeIcons.filter(m => m !== marker);
-                return;
-              }
-              let currentEsbirros = st.esbirros || 0;
-              if(currentEsbirros >= maxEsbirros) {
-                map.removeLayer(marker);
-                activeIcons = activeIcons.filter(m => m !== marker);
-                return;
-              }
-              let esbirrosGain = Math.floor(gameState.esbirrosPerSecond * 100);
-              const canAdd = Math.max(0, maxEsbirros - currentEsbirros);
-              if(esbirrosGain > canAdd) esbirrosGain = canAdd;
-
-              if(esbirrosGain > 0) {
-                generateEsbirrosNews(
-                  { bandName: gameState.bandName, leaderName: gameState.leaderName },
-                  st.countryName || iso
-                ).then((newsContent) => {
-                  showNewsPopup(newsContent, "¡Reclutamiento sorpresa!", "esbirros");
-                  animateBonusRewardInNews(esbirrosGain, "esbirros", 2000, () => {
-                    st.esbirros = (st.esbirros || 0) + esbirrosGain;
-                    renderStats();
-                    renderWorldList();
-                    saveGame();
-                    createAnimation(bannerEsbirrosElement, esbirrosGain, "esbirros");
-                  });
-                });
-              }
-            }
-          } else if(iconType === "police") {
-            if(gameState.policeStars > 0) {
-              generatePoliceNews(
-                { bandName: gameState.bandName, leaderName: gameState.leaderName },
-                gameState.countryStatus[iso]?.countryName || iso
-              ).then((newsContent) => {
-                showNewsPopup(newsContent, "¡Relajación Policial!", "police");
-                animateBonusRewardInNews(1, "police", 2000, () => {
-                  recalcPoliceStarsFromValue(gameState.policeStars - 1);
-                  renderStats();
-                  saveGame();
-                  createAnimation(bannerMoneyElement, -1, "police");
-                  SoundManager.playPolice();
-                });
-              });
-            }
-          }
+          handleIconClick(marker, iconType, iso);
           map.removeLayer(marker);
           activeIcons = activeIcons.filter(m => m !== marker);
         });
         marker.addTo(map);
         activeIcons.push(marker);
-        return;
+        return marker;
       }
     }
     tries--;
+  }
+  return null;
+}
+
+// Nueva función para manejar los clicks en los íconos
+function handleIconClick(marker, iconType, iso) {
+  const st = gameState.countryStatus[iso];
+  
+  if(iconType === "money") {
+    const moneyGain = gameState.moneyPerSecond * 10;
+    generateMoneyNews(
+      { bandName: gameState.bandName, leaderName: gameState.leaderName },
+      st?.countryName || iso
+    ).then((newsContent) => {
+      showNewsPopup(newsContent, "¡Botín encontrado!", "money");
+      animateBonusRewardInNews(moneyGain, "money", 2000, () => {
+        gameState.playerMoney += moneyGain;
+        renderStats();
+        saveGame();
+        createAnimation(bannerMoneyElement, moneyGain, "money");
+        SoundManager.playMoneyEarned();
+      });
+    });
+  } else if(iconType === "esbirros") {
+    if(st) {
+      const maxEsbirros = st.popReal - st.arrestedTotal;
+      if(maxEsbirros <= 0 || st.control === 100) return;
+      
+      let currentEsbirros = st.esbirros || 0;
+      if(currentEsbirros >= maxEsbirros) return;
+      
+      let esbirrosGain = Math.floor(gameState.esbirrosPerSecond * 100);
+      const canAdd = Math.max(0, maxEsbirros - currentEsbirros);
+      if(esbirrosGain > canAdd) esbirrosGain = canAdd;
+
+      if(esbirrosGain > 0) {
+        generateEsbirrosNews(
+          { bandName: gameState.bandName, leaderName: gameState.leaderName },
+          st.countryName || iso
+        ).then((newsContent) => {
+          showNewsPopup(newsContent, "¡Reclutamiento sorpresa!", "esbirros");
+          animateBonusRewardInNews(esbirrosGain, "esbirros", 2000, () => {
+            st.esbirros = (st.esbirros || 0) + esbirrosGain;
+            renderStats();
+            renderWorldList();
+            saveGame();
+            createAnimation(bannerEsbirrosElement, esbirrosGain, "esbirros");
+          });
+        });
+      }
+    }
+  } else if(iconType === "police") {
+    if(gameState.policeStars > 0) {
+      generatePoliceNews(
+        { bandName: gameState.bandName, leaderName: gameState.leaderName },
+        st?.countryName || iso
+      ).then((newsContent) => {
+        showNewsPopup(newsContent, "¡Relajación Policial!", "police");
+        animateBonusRewardInNews(1, "police", 2000, () => {
+          recalcPoliceStarsFromValue(gameState.policeStars - 1);
+          renderStats();
+          saveGame();
+          createAnimation(bannerMoneyElement, -1, "police");
+          SoundManager.playPolice();
+        });
+      });
+    }
   }
 }
 
@@ -1265,20 +1394,57 @@ function spawnRandomIcons(){
   if(cIso.length === 0) return;
 
   const now = Date.now();
-  const isInitialPhase = now - gameState.gameStartTime < 60000;
+  const gameTime = now - gameState.gameStartTime;
+  const isEarlyGame = gameTime < 300000; // Primeros 5 minutos
+  const isMidGame = gameTime >= 300000 && gameTime < 900000; // Entre 5 y 15 minutos
 
-  const moneyInterval = isInitialPhase ? 5000 : MONEY_ICON_SPAWN_INTERVAL;
-  const esbirrosInterval = isInitialPhase ? 7000 : ESBIRROS_ICON_SPAWN_INTERVAL;
-  const policeInterval = isInitialPhase ? 10000 : POLICE_ICON_SPAWN_INTERVAL;
+  // Intervalos más cortos en early game
+  const moneyInterval = isEarlyGame ? 3000 : (isMidGame ? 4000 : MONEY_ICON_SPAWN_INTERVAL);
+  const esbirrosInterval = isEarlyGame ? 4000 : (isMidGame ? 5000 : ESBIRROS_ICON_SPAWN_INTERVAL);
+  const policeInterval = isEarlyGame ? 6000 : (isMidGame ? 8000 : POLICE_ICON_SPAWN_INTERVAL);
+
+  // Función helper para crear animaciones de íconos
+  const createIconAnimation = (marker, type) => {
+    const icon = marker.getIcon();
+    const originalSize = icon.options.iconSize;
+    let size = [...originalSize];
+    let growing = true;
+    let opacity = 1;
+
+    const interval = setInterval(() => {
+      if(growing) {
+        size[0] += 1;
+        size[1] += 1;
+        if(size[0] >= originalSize[0] + 10) growing = false;
+      } else {
+        size[0] -= 1;
+        size[1] -= 1;
+        if(size[0] <= originalSize[0]) growing = true;
+      }
+      
+      const newIcon = L.icon({
+        ...icon.options,
+        iconSize: size,
+        iconAnchor: [size[0]/2, size[1]],
+        className: `pulsing-icon ${type}-icon`
+      });
+      
+      marker.setIcon(newIcon);
+    }, 50);
+
+    // Limpiar animación cuando se elimine el marcador
+    marker.on('remove', () => clearInterval(interval));
+  };
 
   if(moneyIconsEnabled && now - lastMoneySpawn >= moneyInterval) {
     const availableCountries = cIso.filter(i => {
       const cs = gameState.countryStatus[i];
-      return cs && cs.esbirros > 0 && (Math.random() < (cs.control === 100 ? 0.4 : 0.2));
+      return cs && cs.esbirros > 0 && (Math.random() < (cs.control === 100 ? 0.5 : 0.3));
     });
     if(availableCountries.length > 0) {
       const rM = availableCountries[Math.floor(Math.random() * availableCountries.length)];
-      spawnIcon("money", moneyIcon, rM);
+      const marker = spawnIcon("money", moneyIcon, rM);
+      if(marker) createIconAnimation(marker, "money");
       lastMoneySpawn = now;
     }
   }
@@ -1291,7 +1457,8 @@ function spawnRandomIcons(){
     });
     if(availableForEsbirros.length > 0) {
       const rE = availableForEsbirros[Math.floor(Math.random() * availableForEsbirros.length)];
-      spawnIcon("esbirros", esbirrosIcon, rE);
+      const marker = spawnIcon("esbirros", esbirrosIcon, rE);
+      if(marker) createIconAnimation(marker, "esbirros");
       lastEsbirrosSpawn = now;
     }
   }
@@ -1302,12 +1469,13 @@ function spawnRandomIcons(){
       const policeControl = (cs.arrestedTotal / cs.popReal) * 100;
       return cs && cs.esbirros > 0 && (
         policeControl > 51 ||
-        (gameState.policeStars > 0 && cs.control < 100 && Math.random() < 0.3)
+        (gameState.policeStars > 0 && cs.control < 100 && Math.random() < 0.4)
       );
     });
     if(availableForPolice.length > 0) {
       const rP = availableForPolice[Math.floor(Math.random() * availableForPolice.length)];
-      spawnIcon("police", policeIcon, rP);
+      const marker = spawnIcon("police", policeIcon, rP);
+      if(marker) createIconAnimation(marker, "police");
       lastPoliceSpawn = now;
     }
   }

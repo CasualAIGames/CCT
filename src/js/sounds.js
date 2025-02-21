@@ -8,6 +8,17 @@ class SoundManager {
   static isPlaying = false;
   static musicSource = null;
 
+  // Configuraciones para cada sonido
+  static soundConfigs = {
+    click: { type: 'sine', frequency: 1000, duration: 50, volume: 0.1 },
+    money: { type: 'triangle', frequency: 500, frequencyEnd: 1000, duration: 100, volume: 0.2 },
+    upgrade: { type: 'sine', frequency: 800, frequencyEnd: 1200, duration: 200, volume: 0.15 },
+    error: { type: 'sawtooth', frequency: 400, frequencyEnd: 200, duration: 300, volume: 0.1 },
+    popup: { type: 'sine', frequency: 1500, duration: 50, volume: 0.1 },
+    gameover: { type: 'sawtooth', frequency: 300, frequencyEnd: 100, duration: 1000, volume: 0.25 },
+    notification: { type: 'sine', frequency: 900, duration: 100, volume: 0.1 },
+  };
+
   static init() {
     try {
       this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -91,79 +102,92 @@ class SoundManager {
     }
   }
 
+  // Función general para reproducir sonidos basados en configuraciones
   static async playSound(soundName) {
+    const config = this.soundConfigs[soundName];
+    if (!config) {
+      console.error(`Configuración no encontrada para el sonido: ${soundName}`);
+      return;
+    }
+
     try {
-      // Simular efectos de sonido básicos con osciladores si no hay archivos
       const oscillator = this.audioCtx.createOscillator();
       const gainNode = this.audioCtx.createGain();
-      
-      switch(soundName) {
-        case 'click':
-          oscillator.frequency.value = 800;
-          oscillator.type = 'sine';
-          gainNode.gain.value = 0.1;
-          break;
-        case 'money':
-          oscillator.frequency.value = 600;
-          oscillator.type = 'triangle';
-          gainNode.gain.value = 0.2;
-          break;
-        case 'upgrade':
-          oscillator.frequency.value = 1000;
-          oscillator.type = 'sine';
-          gainNode.gain.value = 0.15;
-          break;
-        case 'error':
-          oscillator.frequency.value = 200;
-          oscillator.type = 'sawtooth';
-          gainNode.gain.value = 0.1;
-          break;
-        case 'expansion':
-          oscillator.frequency.value = 400;
-          oscillator.type = 'square';
-          gainNode.gain.value = 0.15;
-          break;
-        case 'police':
-          oscillator.frequency.value = 300;
-          oscillator.type = 'sawtooth';
-          gainNode.gain.value = 0.2;
-          break;
-        case 'popup':
-          oscillator.frequency.value = 700;
-          oscillator.type = 'sine';
-          gainNode.gain.value = 0.1;
-          break;
-        case 'gameover':
-          oscillator.frequency.value = 150;
-          oscillator.type = 'sawtooth';
-          gainNode.gain.value = 0.25;
-          break;
-        case 'notification':
-          oscillator.frequency.value = 900;
-          oscillator.type = 'sine';
-          gainNode.gain.value = 0.1;
-          break;
-        default:
-          oscillator.frequency.value = 440;
-          oscillator.type = 'sine';
-          gainNode.gain.value = 0.1;
+
+      oscillator.type = config.type || 'sine';
+      oscillator.frequency.setValueAtTime(config.frequency, this.audioCtx.currentTime);
+
+      if (config.frequencyEnd) {
+        oscillator.frequency.linearRampToValueAtTime(
+          config.frequencyEnd,
+          this.audioCtx.currentTime + config.duration / 1000
+        );
       }
+
+      gainNode.gain.setValueAtTime(config.volume || 0.1, this.audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.001,
+        this.audioCtx.currentTime + config.duration / 1000
+      );
 
       oscillator.connect(gainNode);
       gainNode.connect(this.sfxGainNode);
-      
+
       oscillator.start();
       setTimeout(() => {
         oscillator.stop();
         oscillator.disconnect();
         gainNode.disconnect();
-      }, 100);
-      
+      }, config.duration);
     } catch (error) {
-      console.error(`Error playing sound ${soundName}:`, error);
+      console.error(`Error al reproducir el sonido ${soundName}:`, error);
     }
   }
 
+  // Función específica para el sonido de policía (sirena)
+  static playPoliceSound() {
+    const frequencies = [800, 1000];
+    const duration = 100;
+    const repeats = 4;
+    let time = this.audioCtx.currentTime;
+
+    for (let i = 0; i < repeats; i++) {
+      const oscillator = this.audioCtx.createOscillator();
+      const gainNode = this.audioCtx.createGain();
+      oscillator.type = 'sawtooth';
+      oscillator.frequency.setValueAtTime(frequencies[i % 2], time);
+      gainNode.gain.setValueAtTime(0.2, time);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, time + duration / 1000);
+      oscillator.connect(gainNode);
+      gainNode.connect(this.sfxGainNode);
+      oscillator.start(time);
+      oscillator.stop(time + duration / 1000);
+      time += duration / 1000;
+    }
+  }
+
+  // Función específica para el sonido de expansión (acorde)
+  static playExpansionSound() {
+    const frequencies = [400, 500, 600];
+    const duration = 500;
+    frequencies.forEach(freq => {
+      const oscillator = this.audioCtx.createOscillator();
+      const gainNode = this.audioCtx.createGain();
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.15, this.audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.001,
+        this.audioCtx.currentTime + duration / 1000
+      );
+      oscillator.connect(gainNode);
+      gainNode.connect(this.sfxGainNode);
+      oscillator.start();
+      oscillator.stop(this.audioCtx.currentTime + duration / 1000);
+    });
+  }
+
+  // Métodos específicos para reproducir cada tipo de sonido
   static playButtonClick() {
     this.playSound('click');
   }
@@ -181,11 +205,11 @@ class SoundManager {
   }
 
   static playExpansion() {
-    this.playSound('expansion');
+    this.playExpansionSound();
   }
 
   static playPolice() {
-    this.playSound('police');
+    this.playPoliceSound();
   }
 
   static playPopup() {
